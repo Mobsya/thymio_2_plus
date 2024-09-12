@@ -6,7 +6,7 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - dr-pogodin-react-native-static-server (0.10.4):
+  - dr-pogodin-react-native-static-server (0.15.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1412,7 +1412,7 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   dr-pogodin-react-native-fs: 827ff295608f6b2e8ec6ef0da6eaa8d1cf1b1aee
-  dr-pogodin-react-native-static-server: 1a0cb5c6dc2e3820a172f324ea0c50de98f3877f
+  dr-pogodin-react-native-static-server: 5781ac2e9d0a4d09bb2e0f1b562e40c8028bff18
   FBLazyVector: f64d1e2ea739b4d8f7e4740cde18089cd97fe864
   FBReactNativeSpec: 9f2b8b243131565335437dba74923a8d3015e780
   Flipper: c7a0093234c4bdd456e363f2f19b2e4b27652d44
@@ -1487,8 +1487,8 @@ SPEC CHECKSUMS:
   RNVectorIcons: 73ab573085f65a572d3b6233e68996d4707fd505
   RNWifi: cc1a28135ee28a3e20030193bd0514360fbeeeb6
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  Yoga: 805bf71192903b20fc14babe48080582fee65a80
+  Yoga: d17d2cc8105eed528474683b42e2ea310e1daf61
 
 PODFILE CHECKSUM: 26edc1ee72f5038d6c968bb68b5d026a4785bc7b
 
-COCOAPODS: 1.14.3
+COCOAPODS: 1.15.2

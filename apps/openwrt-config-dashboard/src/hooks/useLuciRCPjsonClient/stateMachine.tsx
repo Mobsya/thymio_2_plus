@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { useActor } from '@xstate/react';
 import { Actions, assign, createMachine, DoneInvokeEvent, interpret, send } from 'xstate';
 import { getLoginSid } from './fetchCalls/getLoginToken';
-import { getDevices } from './fetchCalls/getAllDevicesIP:Name';
+import { getDevices } from './fetchCalls/getAllDevicesIP_Name';
 import { getWifiStatus } from './fetchCalls/getWifiStatus';
 import { getInternetStatus } from './fetchCalls/getInternetStatus';
 import { ContextData, Event, ServiceEvent, initialState } from '.';
@@ -144,7 +144,6 @@ const actions = {
       }
 
       const devices = await getDevices({ sid });
-
       resolve({ devices });
     });
   },
@@ -256,6 +255,12 @@ const actions = {
     };
   }),
   updateRobots: assign((context: ContextData, event: Event) => {
+    const idMap = event.data.robots.map((robot: { nodeId: any; }) => robot.nodeId);
+    context.robots.forEach(robot => {
+      if (!idMap.includes(robot.nodeId) && robot.status !== "disconnected") {
+        event.data.robots.push(robot);
+      }
+    });
     return {
       robots: event.data.robots,
       times: context.times + 1,
@@ -609,7 +614,6 @@ export const StateProvider = ({ children }: { children: React.ReactNode }) => {
         );
 
         // console.log('tdmClient', { robots: _nodes });
-
         services[1]({ type: 'updateRobots', data: { robots: _nodes } });
         setTDMActive(true);
         // setRouterData({ ...routerData, robots: _nodes });
