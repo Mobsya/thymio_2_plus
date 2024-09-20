@@ -16,14 +16,14 @@ jobs:
  
       steps:
         - name: Check out code
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
           with:
             fetch-depth: 2
  
         - name: Setup Node.js environment
-          uses: actions/setup-node@v3
+          uses: actions/setup-node@v4
           with:
-            node-version: 18
+            node-version: 20
             cache: 'yarn'
  
         - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
           run: yarn build:storybook
 
         - name: Deploy 🚀
-          uses: JamesIves/github-pages-deploy-action@4.1.5
+          uses: JamesIves/github-pages-deploy-action@4
           with:
             branch: gh-pages
             folder: docs
@@ -50,7 +50,7 @@ jobs:
           run: ls apps/openwrt-config-dashboard/dist
 
         - name: Archive Production Artifact
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: openwrt-config-dashboard
             path: apps/openwrt-config-dashboard/dist
@@ -59,7 +59,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Download artifact
         uses: actions/download-artifact@v2
@@ -76,28 +76,18 @@ jobs:
 
       - name: Bump version and push tag
         id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
+        uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Create a GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          release_name: Release ${{ steps.tag_version.outputs.new_tag }}
-          draft: false
-          prerelease: false
-          body: ${{ steps.tag_version.outputs.changelog }}
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./openwrt-config-dashboard.zip
-          asset_name: openwrt-config-dashboard.zip
-          asset_content_type: application/zip
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          files: |
+            ./openwrt-config-dashboard.zip
