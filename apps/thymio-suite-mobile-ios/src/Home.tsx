@@ -91,7 +91,7 @@ function App({navigation}: any): JSX.Element {
         ))}
       </View>
       <View style={styles.containerFooter}>
-        <Text>Thymio Suite Mobile App v.3.1.5</Text>
+        <Text>Thymio Suite Mobile App v.3.2.0</Text>
       </View>
     </View>
   );
