@@ -255,14 +255,13 @@ const actions = {
     };
   }),
   updateRobots: assign((context: ContextData, event: Event) => {
-    const idMap = event.data.robots.map((robot: { nodeId: any; }) => robot.nodeId);
-    context.robots.forEach(robot => {
-      if (!idMap.includes(robot.nodeId) && robot.status !== "disconnected") {
-        event.data.robots.push(robot);
-      }
-    });
+
+    const idsRobots = event.data.robots.map((robot:any)=>robot.nodeId)
+    const tempRobots = context.robots.map((robot) => idsRobots.includes(robot.nodeId))
+    const conectedRobots = tempRobots.filter((robot) => robot.status === 'disconected')
+
     return {
-      robots: event.data.robots,
+      robots: conectedRobots,
       times: context.times + 1,
     };
   }),

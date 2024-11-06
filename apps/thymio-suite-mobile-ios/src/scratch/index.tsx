@@ -1,5 +1,6 @@
-/* eslint-disable indent */
-/* eslint-disable @typescript-eslint/indent */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 /* eslint-disable react-hooks/exhaustive-deps */
 
 /* eslint-disable react/no-unstable-nested-components */
@@ -11,7 +12,7 @@
  * @format
  */
 
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -34,48 +35,12 @@ import {CommonActions} from '@react-navigation/native';
 
 import {useTdm} from '../hooks/useTdm';
 import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
-
-import RNFS from '@dr.pogodin/react-native-fs';
 import {useLanguage} from '../i18n';
 
 import Share from 'react-native-share';
 
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import DocumentPicker from 'react-native-document-picker';
-import {
-  FileSaveOptions,
-  FileSaveSuccess,
-  startDownloadAppSave,
-} from 'react-native-ios-files-app-save';
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
-
-const downloadAndShareFile = async (
-  url: string,
-  filename: string,
-  mimeType: any,
-) => {
-  try {
-    // Descargar el archivo
-    const res = await ReactNativeBlobUtil.config({
-      fileCache: true,
-      appendExt: filename.split('.').pop(), // Usamos el formato basado en el nombre del archivo
-    }).fetch('GET', url);
-
-    // Obtener la ruta del archivo descargado
-    const localFilePath = res.path();
-
-    // Compartir el archivo usando react-native-share
-    await Share.open({
-      url: `file://${localFilePath}`,
-      type: mimeType,
-      filename: filename,
-    });
-
-    console.log('Archivo compartido con éxito.');
-  } catch (error) {
-    console.error('Error descargando o compartiendo el archivo:', error);
-  }
-};
 
 function App({navigation}: any): JSX.Element {
   const {language, i18n} = useLanguage();

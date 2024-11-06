@@ -1,5 +1,6 @@
-/* eslint-disable indent */
-/* eslint-disable @typescript-eslint/indent */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 /* eslint-disable react-hooks/exhaustive-deps */
 
 /* eslint-disable react/no-unstable-nested-components */
@@ -37,7 +38,6 @@ import {CommonActions} from '@react-navigation/native';
 
 import {useTdm} from '../hooks/useTdm';
 import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
-import LangWebview from '../components/webview';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useLanguage} from '../i18n';
@@ -95,7 +95,7 @@ function usePersistentState(key: any, initialValue: any) {
   return [state, setState, asyncSetState];
 }
 
-function App({navigation}: any): JSX.Element {
+function App({navigation, serverUrl }: any): JSX.Element {
   const {language, i18n} = useLanguage();
   const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
 

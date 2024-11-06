@@ -1,35 +1,39 @@
-import * as React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import StaticServer from 'react-native-static-server'; // Using the given implementation
+import RNFS from 'react-native-fs'; // Required for file system paths
 import HomeScreen from './Home';
 import Scratch from './scratch';
 import Vpl3 from './vpl3';
 import Thymio2pConfigurator from './Thymio2pConfigurator';
-import {createContext, useContext, useEffect, useState} from 'react';
-import {AppState, AppStateStatus} from 'react-native';
-
-import StaticServer, {
-  resolveAssetsPath,
-  STATES,
-} from '@dr.pogodin/react-native-static-server';
-import {Text, View} from 'react-native';
-import {set} from 'mobx';
 
 const Stack = createNativeStackNavigator();
 
-// Crea un contexto con un estado inicial
+// Define your static server states
+const STATES = {
+  ACTIVE: 'active',
+  STARTING: 'starting',
+  STOPPING: 'stopping',
+  CRASHED: 'crashed',
+  INACTIVE: 'inactive',
+};
+
+// Create a context for loading state
 const LoadingContext = createContext({
   loading: true,
   setLoading: (loading: boolean) => {},
+  serverUrl: '',
 });
 
-// Hook personalizado para usar el contexto
+// Custom hook for loading context
 export const useLoading = () => useContext(LoadingContext);
 
+// Hook for tracking app state (foreground/background)
 const useAppState = (): AppStateStatus => {
-  const [appState, setAppState] = useState<AppStateStatus>(
-    AppState.currentState,
-  );
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -45,136 +49,38 @@ const useAppState = (): AppStateStatus => {
 };
 
 const App = () => {
-  const appState = useAppState();
-
-  const [server, setServer] = useState<StaticServer | null>(
-    new StaticServer({
-      port: 3000,
-      fileDir: resolveAssetsPath('webroot'),
-      errorLog: true,
-      stopInBackground: true,
-    }),
-  );
-
+  const [serverUrl, setServerUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [ServerState, setState] = useState(STATES.INACTIVE);
-  const [times, setTimes] = useState(3);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (times < 3) {
-        setTimes(times + 1);
-        console.log('times', times);
-      }
-      if (times === 3) {
-        if (STATES[ServerState] === `${STATES.CRASHED}`) {
-          console.log('server crashed');
-          setServer(
-            new StaticServer({
-              port: 3000,
-              fileDir: resolveAssetsPath('webroot'),
-              errorLog: true,
-              stopInBackground: false,
-            }),
-          );
+    const path = `${RNFS.MainBundlePath}/www`;
 
-          setLoading(false);
-        } else if (STATES[ServerState] === `${STATES.INACTIVE}`) {
-          console.log('server inactive');
-          server?.start().then(url => {
-            setLoading(false);
-          });
-        } else {
-          console.log('server active');
-          setLoading(false);
-        }
-      }
-    }, 500);
+    // for debug
+    RNFS.readDir(path).then((files) => {
+      console.log('Files in www directory: ', JSON.stringify(files.map(({name})=>name), null, 2));
+    });
 
+    const server = new StaticServer(3000, path, { localOnly: true, keepAlive : true });
+
+    server.start().then((url:string) => {
+      setServerUrl(`${url}`);
+      console.log('Server running at:', url);
+      setLoading(false);
+
+    });
+
+    // Stop the server when the component unmounts
     return () => {
-      clearTimeout(timeout);
+      server.stop().then(() => {
+        console.log('Server stopped');
+      }).catch((error) => {
+        console.error('Error stopping server:', error);
+      });
     };
-  }, [times, server, ServerState]);
-
-  useEffect(() => {
-    if (server) {
-      setTimes(0);
-      // Suponiendo que 'webroot' es una carpeta en la raíz de tu proyecto
-      server.start().then(url => {
-        setLoading(false);
-      });
-
-      server.addStateListener((state: number) => {
-        console.log('state', STATES[state]);
-
-        if (state === STATES.ACTIVE) {
-          setLoading(false);
-          setState(STATES.ACTIVE);
-        }
-
-        if (state === STATES.STARTING) {
-          setLoading(true);
-          setState(STATES.STARTING);
-          setTimes(0);
-        }
-
-        if (state === STATES.STOPPING) {
-          setState(STATES.STOPPING);
-          // setLoading(true);
-        }
-
-        if (state === STATES.CRASHED) {
-          setState(STATES.CRASHED);
-          setLoading(true);
-          setTimes(0);
-        }
-
-        if (state === STATES.INACTIVE) {
-          setState(STATES.INACTIVE);
-          setLoading(true);
-          setTimes(0);
-        }
-      });
-    }
-
-    if (server && server.state === STATES.CRASHED) {
-      console.log('server crashed');
-      setLoading(true);
-      setServer(
-        new StaticServer({
-          port: 3000,
-          fileDir: resolveAssetsPath('webroot'),
-          errorLog: true,
-          stopInBackground: false,
-        }),
-      );
-
-      setLoading(false);
-    }
-
-    if (server && server.state === STATES.INACTIVE) {
-      console.log('server inactive');
-
-      server.start().then(url => {
-        setLoading(false);
-      });
-    }
-  }, [server]);
-
-  useEffect(() => {
-    if (appState === 'background') {
-      // server?.stop();
-      // setLoading(true);
-    }
-
-    if (appState === 'active') {
-      server?.start();
-      setLoading(false);
-    }
-  }, [appState, server]);
+  }, []);
 
   return (
-    <LoadingContext.Provider value={{loading, setLoading}}>
+    <LoadingContext.Provider value={{ loading, setLoading, serverUrl }}>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
@@ -185,27 +91,12 @@ const App = () => {
             headerTitleStyle: {
               fontWeight: 'bold',
             },
-          }}>
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{title: ''}}
-          />
-          <Stack.Screen
-            name="Scratch"
-            component={Scratch}
-            options={{title: 'Scratch', gestureEnabled: false}}
-          />
-          <Stack.Screen
-            name="VPL3"
-            component={Vpl3}
-            options={{title: 'VPL3', gestureEnabled: false}}
-          />
-          <Stack.Screen
-            name="Thymio2pConfigurator"
-            component={Thymio2pConfigurator}
-            options={{title: 'Thymio2+ configuration', gestureEnabled: false}}
-          />
+          }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: '' }} />
+          <Stack.Screen name="Scratch" component={Scratch} options={{ title: 'Scratch', gestureEnabled: false }} />
+          <Stack.Screen name="VPL3" component={Vpl3} options={{ title: 'VPL3', gestureEnabled: false }} />
+          <Stack.Screen name="Thymio2pConfigurator" component={Thymio2pConfigurator} options={{ title: 'Thymio2+ configuration', gestureEnabled: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </LoadingContext.Provider>
