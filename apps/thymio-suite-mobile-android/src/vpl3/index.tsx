@@ -1,16 +1,3 @@
-/* eslint-disable indent */
-/* eslint-disable @typescript-eslint/indent */
-/* eslint-disable react-hooks/exhaustive-deps */
-
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react-native/no-inline-styles */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import {
@@ -38,9 +25,7 @@ import CloseIcon from '../assets/launcher-icon-close';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
 
-import {useTdm} from '../hooks/useTdm';
 import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
-import LangWebview from '../components/webview';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useLanguage} from '../i18n';
@@ -48,8 +33,11 @@ import {useLanguage} from '../i18n';
 import DocumentPicker from 'react-native-document-picker';
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 import DeviceInfo from 'react-native-device-info';
+import { TdmDiscovery } from '../packages/TdmDIscovery/TdmDiscovery';
 
 const isTablet = DeviceInfo.isTablet();
+
+const tdmDiscoveryService = new TdmDiscovery();
 
 function usePersistentState(key: any, initialValue: any) {
   const {language, i18n} = useLanguage();
@@ -132,10 +120,7 @@ function App({navigation}: any): JSX.Element {
 
   const webViewRef = useRef<any>(null);
   const [LTServices, setLTServices] = useState({});
-  const {services, status, discovery} = useTdm();
   const isDarkMode = useColorScheme() === 'dark';
-  const [cycle, setCycle] = useState(2);
-  const [first, setFirst] = useState(true);
   const [lasUrl, setLastUrl] = useState('');
   const [webview, setWebview] = useState('scanner');
   const [queryParams, setQueryParams] = useState<any>({});
@@ -304,7 +289,7 @@ function App({navigation}: any): JSX.Element {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
@@ -345,52 +330,40 @@ function App({navigation}: any): JSX.Element {
   }, [navigation, webview, webViewRef]);
 
   useEffect(() => {
-    discovery.scan();
+    const fetchServices = async () => {
+      const services = await tdmDiscoveryService.scan();
+      console.log('[FOUND SERVICES]', services);
+      setLTServices(services);
+    };
+
+    fetchServices();
   }, []);
 
+  /*
   useEffect(() => {
     if (services) {
-      if (
-        (first && JSON.stringify(services) !== '{}') ||
-        (cycle >= 2 &&
-          JSON.stringify(LTServices) !== JSON.stringify(services)) ||
-        (JSON.stringify(LTServices) === '{}' &&
-          JSON.stringify(services) !== '{}') ||
-        (JSON.stringify(LTServices) !== JSON.stringify(services) &&
-          JSON.stringify(services) !== '{}')
-      ) {
-        const names = data
-          .filter((options: any) => options.isAceepted)
-          .map((item: any) => item.name);
-        const servicesLT = {...services};
+      const names = data
+        .filter((options: any) => options.isAceepted)
+        .map((item: any) => item.name);
+      const servicesLT = {...services};
 
-        const resutl = Object.entries(servicesLT)
-          .map(([key, value]) => ({
-            key,
-            ...value,
-          }))
-          .filter((item: any) => names.includes(item.key))
-          .reduce((acc: any, item: any) => ({...acc, [item.key]: item}), {});
+      const resutl = Object.entries(servicesLT)
+        .map(([key, value]) => ({
+          key,
+          ...value,
+        }))
+        .filter((item: any) => names.includes(item.key))
+        .reduce((acc: any, item: any) => ({...acc, [item.key]: item}), {});
 
-        setLTServices(resutl);
-        setFirst(false);
-      }
-
-      if (
-        cycle < 2 &&
-        JSON.stringify(services) === '{}' &&
-        JSON.stringify(LTServices) !== '{}'
-      ) {
-        setCycle(cycle + 1);
-      } else {
-        setCycle(0);
-      }
+      setLTServices(resutl);
+      setFirst(false);
     }
   }, [services]);
+  */
 
   const injectedJavaScript = useMemo(() => {
     const js = `
-  
+
       function handleMessage(event) {
         try {
           const data = JSON.parse(event.data);
@@ -404,10 +377,10 @@ function App({navigation}: any): JSX.Element {
           console.error('Error procesando el mensaje:', e);
         }
       }
-  
+
       document.addEventListener('message', handleMessage);
       window.addEventListener('message', handleMessage);
-  
+
       window.addEventListener('click', function(e) {
         // Intercepta clics o solicitudes de descarga y envía el contenido a React Native
         if (e.target.href && e.target.href.startsWith('blob:')) {
@@ -425,7 +398,7 @@ function App({navigation}: any): JSX.Element {
           });
         }
       }, false);
-  
+
       window["vplStorageGetFunction"] = function (filename, load) {
         program = JSON.stringify(${JSON.stringify(config, null, 2)});
         load(program);

@@ -16,7 +16,6 @@ import {LanguageSelector, useLanguage} from './i18n';
 import DeviceInfo from 'react-native-device-info';
 import FullScreenModal from './components/Modal';
 import Policy from './components/Policy';
-import {TDMexplorer} from './components/TDMexplorer';
 
 const isTablet = DeviceInfo.isTablet();
 
@@ -69,9 +68,6 @@ const WelcomeScreen = ({setFirstUse, setLoading}: any) => {
 
   return (
     <View style={styles.container}>
-      <FullScreenModal open={openVC} onClose={setOpenVC}>
-        <TDMexplorer />
-      </FullScreenModal>
       <FullScreenModal open={openModal} onClose={setOpenModal}>
         <Policy />
       </FullScreenModal>

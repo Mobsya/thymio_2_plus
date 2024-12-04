@@ -4,11 +4,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from './Home';
 import Scratch from './scratch';
 import Vpl3 from './vpl3';
-import Thymio2pConfigurator from './Thymio2pConfigurator';
-import {createContext, useContext, useEffect, useState} from 'react';
+import RobotSelect from './RobotSelect';
+import {createContext, useContext, useState} from 'react';
 import {
-  AppState,
-  AppStateStatus,
   Dimensions,
   StatusBar,
   StyleSheet,
@@ -17,9 +15,9 @@ import {
 } from 'react-native';
 import WelcomeScreen from './firstUse';
 import {useFirstUseState} from './hooks/useFirstTime';
-import StartVue from './startVue';
 import Logo from './assets/logo-thymio';
 import {useLanguage} from './i18n';
+import { TdmDiscovery } from './packages/TdmDIscovery/TdmDiscovery';
 
 const Stack = createNativeStackNavigator();
 
@@ -91,9 +89,9 @@ const App = () => {
             options={{title: 'VPL3', gestureEnabled: false}}
           />
           <Stack.Screen
-            name="Thymio2pConfigurator"
-            component={Thymio2pConfigurator}
-            options={{title: 'Thymio2+ configuration', gestureEnabled: false}}
+            name="RobotSelect"
+            component={RobotSelect}
+            options={{title: 'RobotSelect'}}
           />
         </Stack.Navigator>
       </NavigationContainer>

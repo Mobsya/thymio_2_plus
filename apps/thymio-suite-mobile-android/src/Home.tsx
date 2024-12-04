@@ -1,10 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, {useEffect, useState} from 'react';
 import {
   StatusBar,
@@ -85,6 +78,10 @@ function App({navigation}: any): JSX.Element {
             logo: require('./assets/scratch-animated-icon.webp'),
             name: 'Scratch',
           },
+          {
+            logo: require('./assets/scratch-animated-icon.webp'),
+            name: 'RobotSelect'
+          }
         ].map(({logo, name}) => (
           <TouchableOpacity
             key={name}
@@ -94,7 +91,6 @@ function App({navigation}: any): JSX.Element {
                 style={isTablet ? styles.stretchTablet : styles.stretchMobile}
                 source={logo}
               />
-              <Text>{name}</Text>
             </View>
           </TouchableOpacity>
         ))}

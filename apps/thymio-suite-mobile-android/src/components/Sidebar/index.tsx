@@ -15,7 +15,6 @@ import {
 
 import CloseIcon from '../../assets/launcher-icon-close';
 import {LanguageSelector, useLanguage} from '../../i18n';
-import {useTdmServices} from '../../Thymio2pConfigurator/useTdmConfigurator';
 import MangoIcon from '../../assets/mango-icon';
 import PCIcon from '../../assets/pc-icon';
 import {CheckBox} from './checkBox';
@@ -199,7 +198,6 @@ export const Sidebar = ({
   options?: {label: string; value: string}[];
   onSelect: (option: any) => void;
 }) => {
-  const {TDMServices, servicesNames, scan, loading } = useTdmServices();
   const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
   const [firstUse, setFirstUse] = useAsyncStorageArray('firstUse', true);
 
@@ -242,24 +240,6 @@ export const Sidebar = ({
     }).start();
   }, [isVisible, width, translateX, overlayOpacity]);
 
-  useEffect(() => {
-    if (firstUse) {
-      const fistUseData = TDMServices.map((item: any) => ({
-        ...item,
-        isAceepted: true,
-      }));
-
-      setData(fistUseData);
-      setFirstUse(false);
-    } else {
-      TDMServices.forEach((item: any) => {
-        if (data.filter((d: any) => d.name === item.name).length === 0) {
-          addData({...item, isAceepted: true});
-        }
-      });
-    }
-  }, [TDMServices, firstUse]);
-
   return (
     <View
       style={StyleSheet.absoluteFillObject}
@@ -290,49 +270,7 @@ export const Sidebar = ({
           <TouchableOpacity onPress={onClose}>
             <CloseIcon />
           </TouchableOpacity>
-          <TouchableOpacity onPress={scan}>
-            <Text style={styles.titleMenuHead}>{i18n.t('thymio2p_scan')}</Text>
-          </TouchableOpacity>
         </View>
-        {TDMServices.sort(sortServices)
-          .filter((option: any) => option.name)
-          .map((option: any, index) => (
-            <ItemAcordeon
-              key={option.name}
-              option={option}
-              index={index}
-              data={data}
-              addData={addData}
-              removeDataByName={removeDataByName}
-            />
-          ))}
-
-        { TDMServices.length === 0 && !loading && (
-          <View style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 12,
-          }}>
-            <Text style={{
-              textAlign: 'justify',
-              marginBottom: 10,
-              fontWeight: 'bold',
-            }}>
-              {i18n.t('tdm_explorer_no_services_found')}
-            </Text>
-            <Text
-              style={{
-                textAlign: 'justify',
-                marginBottom: 20,
-                color: '#666',
-              }}
-            >
-              {i18n.t('tdm_explorer_scan_again')}
-            </Text>
-          </View>
-        )}
       </Animated.View>
     </View>
   );
