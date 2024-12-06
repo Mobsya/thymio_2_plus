@@ -17,7 +17,7 @@ import WelcomeScreen from './firstUse';
 import {useFirstUseState} from './hooks/useFirstTime';
 import Logo from './assets/logo-thymio';
 import {useLanguage} from './i18n';
-import { TdmDiscovery } from './packages/TdmDIscovery/TdmDiscovery';
+import VPL3 from './VPL3';
 
 const Stack = createNativeStackNavigator();
 
@@ -92,6 +92,11 @@ const App = () => {
             name="RobotSelect"
             component={RobotSelect}
             options={{title: 'RobotSelect'}}
+          />
+          <Stack.Screen
+            name="NewVPL3"
+            component={VPL3}
+            options={{title: 'VPL3', gestureEnabled: false}}
           />
         </Stack.Navigator>
       </NavigationContainer>

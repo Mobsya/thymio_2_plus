@@ -45,11 +45,11 @@ import {useLanguage} from '../i18n';
 
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 import DeviceInfo from 'react-native-device-info';
-import { TdmDiscovery } from '../packages/TdmDIscovery/TdmDiscovery';
+import { RobotService } from '../packages/TdmDIscovery/TdmDiscovery';
 
 const isTablet = DeviceInfo.isTablet();
 
-const tdmDiscoveryService = new TdmDiscovery();
+const tdmDiscoveryService = new RobotService();
 
 function usePersistentState(key: any, initialValue: any) {
   const {language, i18n} = useLanguage();

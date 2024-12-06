@@ -33,11 +33,11 @@ import {useLanguage} from '../i18n';
 import DocumentPicker from 'react-native-document-picker';
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 import DeviceInfo from 'react-native-device-info';
-import { TdmDiscovery } from '../packages/TdmDIscovery/TdmDiscovery';
+import { RobotService } from '../packages/TdmDIscovery/TdmDiscovery';
 
 const isTablet = DeviceInfo.isTablet();
 
-const tdmDiscoveryService = new TdmDiscovery();
+const tdmDiscoveryService = new RobotService();
 
 function usePersistentState(key: any, initialValue: any) {
   const {language, i18n} = useLanguage();
@@ -514,6 +514,7 @@ function App({navigation}: any): JSX.Element {
       .catch(err => console.error('An error occurred', err));
   };
 
+  /*
   useEffect(() => {
     const newHost = 'file:///android_asset';
 
@@ -536,6 +537,7 @@ function App({navigation}: any): JSX.Element {
       )}&lang=${language}&isTablet=${JSON.stringify(isTablet)}`,
     );
   }, [Platform.OS, LTServices, language]);
+  */
 
   useEffect(() => {
     setTimeout(() => {
