@@ -33,7 +33,7 @@ import {useLanguage} from '../i18n';
 import DocumentPicker from 'react-native-document-picker';
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 import DeviceInfo from 'react-native-device-info';
-import { RobotService } from '../packages/TdmDIscovery/TdmDiscovery';
+import { RobotService } from '../services/RobotService';
 
 const isTablet = DeviceInfo.isTablet();
 
@@ -329,6 +329,7 @@ function App({navigation}: any): JSX.Element {
     });
   }, [navigation, webview, webViewRef]);
 
+  /*
   useEffect(() => {
     const fetchServices = async () => {
       const services = await tdmDiscoveryService.scan();
@@ -338,6 +339,7 @@ function App({navigation}: any): JSX.Element {
 
     fetchServices();
   }, []);
+  */
 
   /*
   useEffect(() => {

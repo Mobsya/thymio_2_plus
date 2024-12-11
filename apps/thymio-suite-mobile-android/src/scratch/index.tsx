@@ -1,16 +1,3 @@
-/* eslint-disable indent */
-/* eslint-disable @typescript-eslint/indent */
-/* eslint-disable react-hooks/exhaustive-deps */
-
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react-native/no-inline-styles */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import {
@@ -45,7 +32,7 @@ import {useLanguage} from '../i18n';
 
 import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 import DeviceInfo from 'react-native-device-info';
-import { RobotService } from '../packages/TdmDIscovery/TdmDiscovery';
+import { RobotService } from '../services/RobotService';
 
 const isTablet = DeviceInfo.isTablet();
 
@@ -278,6 +265,7 @@ function App({navigation}: any): JSX.Element {
     });
   }, [navigation, webview, webViewRef]);
 
+  /*
   useEffect(() => {
     const fetchServices = async () => {
       const services = await tdmDiscoveryService.scan();
@@ -287,6 +275,7 @@ function App({navigation}: any): JSX.Element {
 
     fetchServices();
   }, []);
+  */
 
   const [host, setHost] = useState<string | undefined>(undefined);
 

@@ -1,7 +1,7 @@
 import "fast-text-encoding";
 import { createClient, IClient, INode } from '@mobsya-association/thymio-api';
 import Zeroconf, { Service } from 'react-native-zeroconf';
-import { BehaviorSubject, finalize, map, Subscription, tap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, finalize, map, Observable, scan, Subscription, tap } from 'rxjs';
 import { CloseEvent } from "isomorphic-ws";
 import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
 
@@ -18,42 +18,22 @@ function isIPv4(ip: string): boolean {
 }
 
 export class RobotService {
-  zeroconf: Zeroconf;
+  private zeroconf: Zeroconf;
 
-
-  private resolvedServices = new BehaviorSubject<Service[]>([]);
   private openConnections: IClient[] = [];
-  private connectionSub?: Subscription;
+
+  private resolvedService$: Observable<Service>;
+  private resolvedServiceSub?: Subscription;
+
   private connectedRobots = new BehaviorSubject<ConnectedRobot[]>([]);
 
   public connectedRobots$ = this.connectedRobots.asObservable();
 
   constructor() {
     this.zeroconf = new Zeroconf();
-    this.connectionSub = undefined;
 
     this.zeroconf.on('found', service => {
       //console.log('[Found]', JSON.stringify(service, null, 2));
-    });
-
-    this.zeroconf.on('resolved', service => {
-      //console.log('[Resolve]', JSON.stringify(service, null, 2));
-
-      const resolvedService = {
-        ...service,
-        host: isIPv4(service.host) ? service.host : `[${service.host}]`,
-        addresses: service.addresses.map((address: string) =>
-          isIPv4(address) ? address : `[${address}]`,
-        )
-      };
-
-      const alreadyResolvedHosts = this.resolvedServices.getValue().map(s => s.host);
-      console.log('resolved hosts : ', alreadyResolvedHosts)
-
-      if (!alreadyResolvedHosts.find(host => host === resolvedService.host)) {
-        console.log('adding : ', resolvedService.host)
-        this.resolvedServices.next([resolvedService, ...this.resolvedServices.getValue()]);
-      }
     });
 
     this.zeroconf.on('start', () => {
@@ -67,6 +47,22 @@ export class RobotService {
     this.zeroconf.on('error', (err: any) => {
       console.log('[Error during Scan]');
     });
+
+    this.resolvedService$ = new Observable(observer => {
+      this.zeroconf.on('resolved', service => {
+        console.log('[Resolve]', JSON.stringify(service, null, 2));
+
+        const resolvedService = {
+          ...service,
+          host: isIPv4(service.host) ? service.host : `[${service.host}]`,
+          addresses: service.addresses.map((address: string) =>
+            isIPv4(address) ? address : `[${address}]`,
+          )
+        };
+
+        observer.next(resolvedService);
+      });
+    })
   }
 
   private onClose = (event: CloseEvent) => {
@@ -99,7 +95,12 @@ export class RobotService {
 
     this.zeroconf.scan('mobsya', 'tcp', 'local.');
 
-    this.connectionSub = this.resolvedServices.pipe(
+    this.resolvedServiceSub = this.resolvedService$.pipe(
+      distinctUntilChanged((prev, next) => prev.host === next.host),
+      scan<Service, Service[]>(
+        (services, newService) => [...services, newService],
+        []
+      ),
       map(services => {
         return services.map(service => {
           const host = service.host;
@@ -135,8 +136,9 @@ export class RobotService {
 
   close = () => {
     this.zeroconf.stop();
-    if (this.connectionSub) {
-      this.connectionSub.unsubscribe();
+
+    if (this.resolvedServiceSub) {
+      this.resolvedServiceSub.unsubscribe();
     }
     this.connectedRobots.next([]);
   };

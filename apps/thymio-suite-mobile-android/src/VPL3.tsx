@@ -1,6 +1,6 @@
 import React from "react";
 import { SafeAreaView, StatusBar, View, Dimensions, StyleSheet } from "react-native";
-import {WebView, WebViewNavigation} from 'react-native-webview';
+import {WebView} from 'react-native-webview';
 
 import {useLanguage} from './i18n/index';
 
@@ -10,8 +10,6 @@ function VPL3({route, navigation}: any): JSX.Element {
   const { name, uuid, host, port } = route.params;
   const appURI = `file:///android_asset/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${host}:${port}&name=${name}`;
   const encodedURI = encodeURI(appURI);
-  console.log(encodedURI)
-
 
   return (
     <SafeAreaView style={styles.root}>

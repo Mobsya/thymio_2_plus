@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Dimensions, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
-import { ConnectedRobot, RobotService } from "./packages/TdmDIscovery/TdmDiscovery";
+import { ConnectedRobot, RobotService } from "./services/RobotService";
 import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
 
 function RobotSelect({ navigation }: any): JSX.Element {

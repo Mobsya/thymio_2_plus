@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import Logo from './assets/logo-thymio';
 import {Menu} from './components/Sidebar/menu';
-import {useLoading} from './App';
-import {LanguageSelector, useLanguage} from './i18n';
+import {useLanguage} from './i18n';
 import DeviceInfo from 'react-native-device-info';
 
 const isTablet = DeviceInfo.isTablet();
