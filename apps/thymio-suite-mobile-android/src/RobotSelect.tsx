@@ -22,7 +22,7 @@ function RobotSelect({ navigation }: any): JSX.Element {
     }
   }, [])
 
-  const nodeList = robots.map(robot =>
+  const robotList = robots.map(robot =>
     <View key={robot.node.id.toString()}>
       <Text>{robot.node.id.toString()}: {robot.node.statusAsString}</Text>
       <Button
@@ -51,7 +51,7 @@ function RobotSelect({ navigation }: any): JSX.Element {
           </Text>
         </View>
         <View style={styles.blue}>
-          {nodeList}
+          {robotList}
         </View>
       </View>
     </SafeAreaView>

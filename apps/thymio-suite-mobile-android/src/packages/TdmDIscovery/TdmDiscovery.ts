@@ -3,6 +3,7 @@ import { createClient, IClient, INode } from '@mobsya-association/thymio-api';
 import Zeroconf, { Service } from 'react-native-zeroconf';
 import { BehaviorSubject, finalize, map, Subscription, tap } from 'rxjs';
 import { CloseEvent } from "isomorphic-ws";
+import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
 
 export type ConnectedRobot = {
   host: string,
@@ -32,11 +33,11 @@ export class RobotService {
     this.connectionSub = undefined;
 
     this.zeroconf.on('found', service => {
-      console.log('[Found]', JSON.stringify(service, null, 2));
+      //console.log('[Found]', JSON.stringify(service, null, 2));
     });
 
     this.zeroconf.on('resolved', service => {
-      console.log('[Resolve]', JSON.stringify(service, null, 2));
+      //console.log('[Resolve]', JSON.stringify(service, null, 2));
 
       const resolvedService = {
         ...service,
@@ -47,8 +48,10 @@ export class RobotService {
       };
 
       const alreadyResolvedHosts = this.resolvedServices.getValue().map(s => s.host);
+      console.log('resolved hosts : ', alreadyResolvedHosts)
 
       if (!alreadyResolvedHosts.find(host => host === resolvedService.host)) {
+        console.log('adding : ', resolvedService.host)
         this.resolvedServices.next([resolvedService, ...this.resolvedServices.getValue()]);
       }
     });
@@ -70,6 +73,27 @@ export class RobotService {
     console.log('CLOSED', event);
   }
 
+  private updateConnectedRobots = (updatedRobots: ConnectedRobot[]) => {
+    if(updatedRobots.length > 0) {
+      let currentRobots = this.connectedRobots.getValue();
+
+      updatedRobots.forEach(updatedRobot => {
+        const robotIndex = currentRobots.findIndex(robot => robot.node.id.toString() === updatedRobot.node.id.toString());
+        if (robotIndex < 0 && updatedRobot.node.status !== NodeStatus.disconnected) {
+          currentRobots.push(updatedRobot);
+        } else {
+          if (updatedRobot.node.status === NodeStatus.disconnected) {
+            currentRobots = currentRobots.filter(robot => robot.node.id.toString() !== updatedRobot.node.id.toString());
+          } else {
+            currentRobots[robotIndex] = updatedRobot;
+          }
+        }
+      });
+
+      this.connectedRobots.next([...currentRobots]);
+    }
+  }
+
   scan = () => {
     console.log('[ZEROCONF SCAN]');
 
@@ -85,14 +109,16 @@ export class RobotService {
           const client = createClient(`ws://${host}:${port}`);
 
           client.onNodesChanged = (nodes) => {
-            const connectedRobots: ConnectedRobot[] = nodes.map(node => {
-              return {
-                host,
-                port,
-                node
-              };
-            });
-            this.connectedRobots.next(connectedRobots);
+            const connectedRobots: ConnectedRobot[] = nodes
+              .map(node => {
+                return {
+                  host,
+                  port,
+                  node
+                };
+              });
+
+            this.updateConnectedRobots(connectedRobots);
           };
 
           client.onClose = this.onClose;
