@@ -1,9 +1,10 @@
 import "fast-text-encoding";
 import { createClient, IClient, INode } from '@mobsya-association/thymio-api';
 import Zeroconf, { Service } from 'react-native-zeroconf';
-import { BehaviorSubject, distinctUntilChanged, finalize, map, Observable, scan, Subscription, tap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, EMPTY, finalize, map, Observable, scan, Subscription, tap } from 'rxjs';
 import { CloseEvent } from "isomorphic-ws";
 import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
+import Toast from 'react-native-simple-toast';
 
 export type ConnectedRobot = {
   host: string,
@@ -107,27 +108,31 @@ export class RobotService {
           const port = service.txt['ws-port'];
           console.log(`CREATING CLIENT at ${host}:${port}`)
 
-          const client = createClient(`ws://${host}:${port}`);
+          try {
+            const client = createClient(`ws://${host}:${port}`);
 
-          client.onNodesChanged = (nodes) => {
-            const connectedRobots: ConnectedRobot[] = nodes
-              .map(node => {
-                return {
-                  host,
-                  port,
-                  node
-                };
-              });
+            client.onNodesChanged = (nodes) => {
+              const connectedRobots: ConnectedRobot[] = nodes
+                .map(node => {
+                  return {
+                    host,
+                    port,
+                    node
+                  };
+                });
 
-            this.updateConnectedRobots(connectedRobots);
-          };
+              this.updateConnectedRobots(connectedRobots);
+            };
 
-          client.onClose = this.onClose;
+            client.onClose = this.onClose;
 
-          return client;
+            return client;
+          } catch (err: any) {
+            Toast.showWithGravity(err.toString(), Toast.LONG, Toast.BOTTOM);
+          }
         });
       }),
-      tap(clients => this.openConnections = clients),
+      tap(clients => this.openConnections = clients.filter(client => client !== undefined)),
       finalize(() => this.openConnections.forEach(client => client.close()))
     ).subscribe({
       next: client => client,
