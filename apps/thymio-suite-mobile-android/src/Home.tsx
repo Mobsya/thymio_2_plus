@@ -10,9 +10,9 @@ import {
   Image,
 } from 'react-native';
 import Logo from './assets/logo-thymio';
-import {Menu} from './components/Sidebar/menu';
 import {useLanguage} from './i18n';
 import DeviceInfo from 'react-native-device-info';
+import { Menu } from './components/Menu';
 
 const isTablet = DeviceInfo.isTablet();
 
@@ -57,7 +57,7 @@ function App({navigation}: any): JSX.Element {
         backgroundColor={backgroundStyle.backgroundColor}
         hidden
       />
-      <Menu onSelect={option => console.log(option)} setLoading={setLoading} />
+      <Menu setLoading={setLoading} />
 
       <View style={styles.containerTitle}>
         <Logo />
@@ -77,14 +77,10 @@ function App({navigation}: any): JSX.Element {
             logo: require('./assets/scratch-animated-icon.webp'),
             name: 'Scratch',
           },
-          {
-            logo: require('./assets/scratch-animated-icon.webp'),
-            name: 'RobotSelect'
-          }
         ].map(({logo, name}) => (
           <TouchableOpacity
             key={name}
-            onPress={() => navigation.navigate(name)}>
+            onPress={() => navigation.navigate('RobotSelect', { programmingEnv: name })}>
             <View style={{...styles.Apps}}>
               <Image
                 style={isTablet ? styles.stretchTablet : styles.stretchMobile}
@@ -94,6 +90,8 @@ function App({navigation}: any): JSX.Element {
           </TouchableOpacity>
         ))}
       </View>
+
+      <Text style={styles.versionString}>v3.3.0</Text>
     </View>
   );
 }
@@ -190,4 +188,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 50,
   },
+  versionString: {
+    position: 'absolute',
+    bottom: 10
+  }
 });

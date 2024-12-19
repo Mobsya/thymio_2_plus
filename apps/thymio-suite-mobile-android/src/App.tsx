@@ -3,7 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from './Home';
 import Scratch from './scratch';
-import Vpl3 from './vpl3';
+import VPL3 from './vpl3';
 import RobotSelect from './RobotSelect';
 import {createContext, useContext, useState} from 'react';
 import {
@@ -17,14 +17,13 @@ import WelcomeScreen from './firstUse';
 import {useFirstUseState} from './hooks/useFirstTime';
 import Logo from './assets/logo-thymio';
 import {useLanguage} from './i18n';
-import VPL3 from './VPL3';
 
 const Stack = createNativeStackNavigator();
 
 // Crea un contexto con un estado inicial
 const LoadingContext = createContext({
   loading: true,
-  setLoading: (loading: boolean) => {},
+  setLoading: () => {},
 });
 
 // Hook personalizado para usar el contexto
@@ -33,7 +32,7 @@ export const useLoading = () => useContext(LoadingContext);
 const App = () => {
   const [firstUse, setFirstUse] = useFirstUseState();
   const [startVue, setStartVue] = useState(true);
-  const {loading, setLoading, language, i18n} = useLanguage();
+  const {loading, setLoading, i18n} = useLanguage();
 
   if (loading) {
     return (
@@ -52,7 +51,7 @@ const App = () => {
       <WelcomeScreen
         firstUse={firstUse}
         setLoading={setLoading}
-        setFirstUse={(v: boolean) => {
+        setFirstUse={() => {
           setStartVue(false);
           setFirstUse(false);
         }}
@@ -61,46 +60,39 @@ const App = () => {
   }
 
   return (
-    <LoadingContext.Provider value={{loading, setLoading}}>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: '#201439',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}>
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{title: ''}}
-          />
-          <Stack.Screen
-            name="Scratch"
-            component={Scratch}
-            options={{title: 'Scratch', gestureEnabled: false}}
-          />
-          <Stack.Screen
-            name="VPL3"
-            component={Vpl3}
-            options={{title: 'VPL3', gestureEnabled: false}}
-          />
-          <Stack.Screen
-            name="RobotSelect"
-            component={RobotSelect}
-            options={{title: 'RobotSelect'}}
-          />
-          <Stack.Screen
-            name="NewVPL3"
-            component={VPL3}
-            options={{title: 'VPL3', gestureEnabled: false}}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </LoadingContext.Provider>
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#201439',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}>
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{title: ''}}
+        />
+        <Stack.Screen
+          name="RobotSelect"
+          component={RobotSelect}
+          options={{title: 'Select a robot'}}
+        />
+        <Stack.Screen
+          name="Scratch"
+          component={Scratch}
+          options={{title: 'Scratch', gestureEnabled: false}}
+        />
+        <Stack.Screen
+          name="VPL3"
+          component={VPL3}
+          options={{title: 'VPL3', gestureEnabled: false}}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
