@@ -5,6 +5,13 @@ export const es = {
     'Elige un lenguaje de programación para aprender con Thymio',
   menu_option_1_Thymio2p_configuration: 'Configuración de Thymio2+',
   menu_option_2_Class_management: 'Gestión de la clase',
+  vpl3_description_title: 'VPL3 es un lenguaje de programación visual basado en bloques que permite a los más pequeños aprender intuitivamente la lógica de la programación.',
+  vpl3_description_bullet_1: 'La mejor manera de empezar a programar Thymio',
+  vpl3_description_bullet_2: 'Los alumnos pueden iniciarse en la VPL 3 a una edad temprana, sin ni siquiera saber leer',
+  vpl3_description_bullet_3: 'Aprende variables, bucles y principios de programación con sólo arrastrar y soltar iconos.',
+  vpl3_description_bullet_4: 'Sin necesidad de conexión a Internet',
+  description_help_and_tips: 'Haga clic aquí para obtener más información y consejos.',
+  description_materials: 'Para obtener material didáctico e ideas de actividades para el aula con Thymio, visite',
   vpl3_error_to_saved_program: 'Se produjo un problema al guardar el programa',
   vpl3_confirm_quit1: 'Confirmar salida',
   vpl3_confirm_quit2:
@@ -20,6 +27,11 @@ export const es = {
   vpl3_program_save: 'Guardar este programa',
   vpl3_program_load: 'Cargar un programa',
   vpl3_program_new: 'Nuevo programa',
+  scratch_description_title: 'Usando Thymio y Scratch, puedes crear interacciones entre el mundo real y tu pantalla usando las Escenas y Sprites de Scratch.',
+  scratch_description_bullet_1: 'Crea historias interactivas o incluso juegos controlados por Thymio',
+  scratch_description_bullet_2: 'Programa Thymio y Scratch mediante una interfaz de arrastrar y soltar',
+  scratch_description_bullet_3: 'Tu creatividad es el límite',
+  scratch_description_bullet_4: 'Sin necesidad de conexión a Internet',
   scratch_quit: 'Salir',
   scratch_cancel: 'Cancelar',
   scratch_save_success: 'El programa ha sido guardado',
@@ -30,7 +42,7 @@ export const es = {
   scratch_saveForm_info: 'Ingresa un nombre para tu programa',
   scratch_saveForm_labelButton_save: 'Guardar',
   scratch_saveForm_labelButton_calcel: 'Cancelar',
-  thymio2p_scan: 'Escanear',
+  searching_robots: 'Búsqueda de robots...',
   welcome_to_tyhmioSuiteTablet: 'Bienvenido a Thymio Suite Mobile',
   welcome_to_tyhmioSuitePhone: 'Bienvenido a Thymio Suite',
   welcome_policy_message: 'Al usar esta aplicación, aceptas los ###',
@@ -41,11 +53,15 @@ export const es = {
     'Verifica que hayas configurado correctamente el Thymio2+ o que hayas iniciado una computadora relé con Thymio suite',
   tdm_explorer_scan_again_message: 'Intenta escanear nuevamente',
   tdm_explorer_scan: 'Escanear',
-  welcome_message_tablet: `Para programar un robot Thymio, es necesario tener al menos un robot Thymio2 conectado a un router Thymio2+ o a un ordenador relé. 
+  welcome_message_tablet: `Para programar un robot Thymio, es necesario tener al menos un robot Thymio2 conectado a un router Thymio2+ o a un ordenador relé.
   Si esto no es posible, puedes utilizar un simulador disponible en Thymio-suite para PC o MAC.`,
   welcome_message_phone:
     'Para programar un robot Thymio, es necesario tener al menos un robot Thymio2 conectado a un router Thymio2+ o a un ordenador relé. Si esto no es posible, puedes utilizar un simulador disponible en Thymio-suite para PC o MAC.',
   welcome_continue: 'Continuar hacia los lenguajes de programación',
   file_exist: 'El archivo ya existe',
   file_exist_message: '¿Quieres sobrescribirlo como {{name}}?',
+  error: 'Error',
+  can_not_open_url: 'No se puede abrir la URL',
+  storage_permission_title: 'Se necesita permiso de almacenamiento',
+  storage_permission_description: 'Permiso de almacenamiento necesario para guardar y cargar archivos'
 };
