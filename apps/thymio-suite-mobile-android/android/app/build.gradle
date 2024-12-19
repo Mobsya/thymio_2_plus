@@ -80,8 +80,8 @@ android {
         applicationId "org.mobsya.ThymioSuite"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 300011
-        versionName "3.1.5"
+        versionCode 300300
+        versionName "3.3.0"
     }
     signingConfigs {
         debug {
