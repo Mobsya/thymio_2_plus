@@ -1,26 +1,19 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
-  Button,
   Dimensions,
-  Touchable,
   TouchableOpacity,
 } from 'react-native';
-import {Sidebar} from './'; // Asegúrate de que la ruta de importación sea correcta
-import MenuIcon from '../../assets/menu-icon';
-import {LanguageSelector, useLanguage} from '../../i18n';
+import {Sidebar} from './Sidebar'; // Asegúrate de que la ruta de importación sea correcta
+import MenuIcon from '../assets/menu-icon';
+import {LanguageSelector} from '../i18n';
 
 export const Menu = ({
-  onSelect,
   setLoading,
 }: {
-  onSelect: (option: any) => void;
   setLoading: (value: boolean) => void;
 }) => {
-  const {i18n} = useLanguage();
-
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [selectable, setSelectable] = useState(true);
 
@@ -63,11 +56,6 @@ export const Menu = ({
       <Sidebar
         isVisible={isSidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        onSelect={option => {
-          onSelect(option);
-          console.log('Option selected:', option);
-          setSidebarVisible(false);
-        }}
       />
     </View>
   );

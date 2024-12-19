@@ -1,7 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-shadow */
 import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
@@ -9,38 +5,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  Dimensions,
   Linking,
 } from 'react-native';
 
 import CloseIcon from '../../assets/launcher-icon-close';
-import {LanguageSelector, useLanguage} from '../../i18n';
+import {useLanguage} from '../../i18n';
 import MangoIcon from '../../assets/mango-icon';
 import PCIcon from '../../assets/pc-icon';
-import {CheckBox} from './checkBox';
-import useAsyncStorageArray from './useAccesTDM'; // Asegúrate de que la ruta del import sea correcta
-import {Button} from 'react-native-share';
+import { RobotService } from '../../services/RobotService';
+import { Service } from 'react-native-zeroconf';
+import { distinctUntilChanged, scan } from 'rxjs';
 
-const sortServices = (
-  a: {name: string | string[]},
-  b: {name: string | string[]},
-) => {
-  // Verificar que 'name' existe y es un string antes de llamar a 'includes'
-  const aIncludesThymio =
-    a.name && typeof a.name === 'string' && a.name.includes('Thymio');
-  const bIncludesThymio =
-    b.name && typeof b.name === 'string' && b.name.includes('Thymio');
-
-  if (aIncludesThymio && !bIncludesThymio) {
-    return 1; // a viene antes que b
-  } else if (!aIncludesThymio && bIncludesThymio) {
-    return -1; // b viene antes que a
-  } else {
-    return 0; // no cambia el orden
-  }
-};
-
-const IOSStyleComponent = ({data}: {data: any}) => {
+const IOSStyleComponent = ({service}: {service: Service}) => {
   const openURL = async (url: any) => {
     try {
       Linking.openURL(url);
@@ -51,16 +27,15 @@ const IOSStyleComponent = ({data}: {data: any}) => {
 
   return (
     <View style={stylesDataRow.container}>
-      <DataRow label="Name" value={data.name.replace('.home', '')} />
-      <DataRow label="Port" value={data.port} />
-      <DataRow label="IP" value={data.ip} />
-      {data.name.includes('Thymio') ? (
+      <DataRow label="Name" value={service.name.replace('Thymio Device Manager on ', '')} />
+      <DataRow label="Port" value={service.port.toString()} />
+      <DataRow label="IP" value={service.addresses[0]} />
+      {service.name.includes('Thymio') ? (
         <>
-          <DataRow label="Firmware Version" value={`v${data.version}`} />
           <TouchableOpacity
             style={stylesDataRow.button}
             onPress={() => {
-              openURL(`http://${data.ip}/dashboard`);
+              openURL(`http://${service.addresses[0]}/dashboard`);
             }}>
             <Text style={stylesDataRow.text}>Go to config page</Text>
           </TouchableOpacity>
@@ -118,72 +93,27 @@ const stylesDataRow = StyleSheet.create({
 });
 
 export const ItemAcordeon = ({
-  option,
-  index,
-  data,
-  addData,
-  removeDataByName,
+  service,
 }: {
-  option: any;
-  index: number;
-  data: any;
-  addData: (data: any) => void;
-  removeDataByName: (name: string) => void;
+  service: Service;
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const animationController = useRef(new Animated.Value(0)).current;
-
-  const toggleExpanded = () => {
-    if (expanded) {
-      Animated.timing(animationController, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: false,
-      }).start();
-    } else {
-      Animated.timing(animationController, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: false,
-      }).start();
-    }
-    setExpanded(!expanded);
-  };
-
-  const maxHeight = animationController.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 300], // Asumiendo un máximo de 300 de altura. Ajusta según necesidad
-  });
-
   return (
     <View style={styles.containerItemAcordeon}>
-      <TouchableOpacity
-        key={index}
-        style={styles.menuItem}
-        onPress={toggleExpanded}>
+      <View
+        key={service.name}
+        style={styles.menuItem}>
         <View style={styles.itemContainer}>
-          <CheckBox
-            isChecked={
-              [...data].filter((item: any) => item.name === option.name)[0]
-                ?.isAceepted
-            }
-            onCheck={value =>
-              value
-                ? addData({...option, isAceepted: true})
-                : removeDataByName(option.name)
-            }
-          />
-          {`${option.name}`.includes('Thymio') ? <MangoIcon /> : <PCIcon />}
+          {`${service.name}`.includes('Thymio') ? <MangoIcon /> : <PCIcon />}
           <Text style={styles.menuOptions}>
-            {`${option.name}`.replace(/.home/g, '')}
+            {`${service.name}`.replace('Thymio Device Manager on ', '')}
           </Text>
         </View>
-      </TouchableOpacity>
-      <Animated.View style={[styles.acordeon, {maxHeight}]}>
+      </View>
+      <View style={[styles.acordeon]}>
         <View style={styles.inner}>
-          <IOSStyleComponent data={option} />
+          <IOSStyleComponent service={service} />
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 };
@@ -191,39 +121,36 @@ export const ItemAcordeon = ({
 export const Sidebar = ({
   isVisible,
   onClose,
-  onSelect,
 }: {
   isVisible: boolean;
   onClose: () => void;
-  options?: {label: string; value: string}[];
-  onSelect: (option: any) => void;
 }) => {
-  const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
-  const [firstUse, setFirstUse] = useAsyncStorageArray('firstUse', true);
-
   const {i18n} = useLanguage();
   const [width] = useState(350); // Ancho del menú lateral
   const translateX = useRef(new Animated.Value(width)).current; // Posición inicial fuera de la pantalla
   const overlayOpacity = useRef(new Animated.Value(0)).current; // Opacidad inicial para el overlay
 
-  const addData = (data: any) => {
-    // busca el elemento y cambia la propiedad isAceepted a true, en caso de no existir lo agrega con isAceepted a true
-    setData((prev: any) =>
-      prev.filter((item: any) => item.name === data.name).length > 0
-        ? prev.map((item: any) =>
-          item.name === data.name ? {...item, isAceepted: true} : item,
-        )
-        : [...prev, {...data, isAceepted: true}],
-    );
-  };
+  const robotService = new RobotService();
+  const [services, setServices] = useState<Service[]>([]);
 
-  const removeDataByName = (name: string) => {
-    setData((prev: any) =>
-      prev.map((item: any) =>
-        item.name === name ? {...item, isAceepted: false} : item,
+  useEffect(() => {
+    robotService.scan();
+    const serviceSub = robotService.resolvedService$.pipe(
+      distinctUntilChanged((prev, next) => prev.host === next.host),
+      scan<Service, Service[]>(
+        (services, newService) => [...services, newService],
+        []
       ),
-    );
-  };
+    ).subscribe(services => {
+      console.log(services.map(service => service.name));
+      setServices(services);
+    });
+
+    return () => {
+      serviceSub.unsubscribe();
+      robotService.close();
+    }
+  }, []);
 
   // Efecto para manejar la animación de apertura/cierre
   useEffect(() => {
@@ -271,6 +198,40 @@ export const Sidebar = ({
             <CloseIcon />
           </TouchableOpacity>
         </View>
+          {services.map(service =>
+            <ItemAcordeon
+              key={service.name}
+              service={service}
+            />
+          )}
+          {services.length === 0 ?
+            <View style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'flex-start',
+              padding: 12,
+            }}>
+              <Text style={{
+                textAlign: 'justify',
+                marginBottom: 10,
+                fontWeight: 'bold',
+              }}>
+                {i18n.t('tdm_explorer_no_services_found')}
+              </Text>
+              <Text
+                style={{
+                  textAlign: 'justify',
+                  marginBottom: 20,
+                  color: '#666',
+                }}
+              >
+                {i18n.t('tdm_explorer_scan_again')}
+              </Text>
+            </View>
+            : <></>
+          }
+
       </Animated.View>
     </View>
   );
