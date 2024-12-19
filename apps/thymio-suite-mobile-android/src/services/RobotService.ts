@@ -1,13 +1,14 @@
 import "fast-text-encoding";
 import { createClient, IClient, INode } from '@mobsya-association/thymio-api';
 import Zeroconf, { Service } from 'react-native-zeroconf';
-import { BehaviorSubject, distinctUntilChanged, EMPTY, finalize, map, Observable, scan, Subscription, tap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, finalize, map, Observable, scan, Subscription, tap } from 'rxjs';
 import { CloseEvent } from "isomorphic-ws";
 import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
 import Toast from 'react-native-simple-toast';
 
 export type ConnectedRobot = {
   host: string,
+  address: string,
   port: string,
   node: INode
 };
@@ -23,7 +24,7 @@ export class RobotService {
 
   private openConnections: IClient[] = [];
 
-  private resolvedService$: Observable<Service>;
+  public resolvedService$: Observable<Service>;
   private resolvedServiceSub?: Subscription;
 
   private connectedRobots = new BehaviorSubject<ConnectedRobot[]>([]);
@@ -34,7 +35,7 @@ export class RobotService {
     this.zeroconf = new Zeroconf();
 
     this.zeroconf.on('found', service => {
-      //console.log('[Found]', JSON.stringify(service, null, 2));
+      console.log('[Found]', JSON.stringify(service, null, 2));
     });
 
     this.zeroconf.on('start', () => {
@@ -106,16 +107,18 @@ export class RobotService {
         return services.map(service => {
           const host = service.host;
           const port = service.txt['ws-port'];
-          console.log(`CREATING CLIENT at ${host}:${port}`)
+          const address = service.addresses[0];
+          console.log(`CREATING CLIENT at ${address}:${port}`)
 
           try {
-            const client = createClient(`ws://${host}:${port}`);
+            const client = createClient(`ws://${address}:${port}`);
 
             client.onNodesChanged = (nodes) => {
               const connectedRobots: ConnectedRobot[] = nodes
                 .map(node => {
                   return {
                     host,
+                    address,
                     port,
                     node
                   };
@@ -146,5 +149,6 @@ export class RobotService {
       this.resolvedServiceSub.unsubscribe();
     }
     this.connectedRobots.next([]);
+    this.openConnections = [];
   };
 }
