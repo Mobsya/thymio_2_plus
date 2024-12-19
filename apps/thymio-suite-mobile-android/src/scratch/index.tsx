@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 import {
   SafeAreaView,
@@ -12,93 +12,29 @@ import {
   Linking,
   Alert,
   Platform,
-  PermissionsAndroid,
 } from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
-import LaucherIcon from '../assets/launcher-icon-scratch';
+import LauncherIcon from '../assets/launcher-icon-scratch';
 import BackIcon from '../assets/back-icon';
-import CloseIcon from '../assets/launcher-icon-close';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
 
-import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useLanguage} from '../i18n';
 
-import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
-import DeviceInfo from 'react-native-device-info';
-import { RobotService } from '../services/RobotService';
 
-const isTablet = DeviceInfo.isTablet();
+function App(props: any): JSX.Element {
+  const {i18n} = useLanguage();
 
-const tdmDiscoveryService = new RobotService();
-
-function usePersistentState(key: any, initialValue: any) {
-  const {language, i18n} = useLanguage();
-
-  const [state, setState] = useState(initialValue);
-
-  // Cargar el estado guardado al inicializar
-  useEffect(() => {
-    const loadStoredState = async () => {
-      try {
-        const storedState = await AsyncStorage.getItem(key);
-
-        if (storedState !== null) {
-          setState(JSON.parse(storedState));
-        }
-      } catch (error) {
-        console.error('Error to load saved state:', error);
-      }
-    };
-
-    loadStoredState();
-  }, [key]);
-
-  const asyncSetState = async (newState: any, callback = () => {}) => {
-    try {
-      const stateToSave = newState !== undefined ? newState : state;
-      await AsyncStorage.setItem(key, JSON.stringify(stateToSave));
-      callback();
-    } catch (error) {
-      Alert.alert(i18n.t('vpl3_error_to_saved_program'), JSON.stringify(error));
-    }
-  };
-
-  useEffect(() => {
-    const _saveState = async () => {
-      try {
-        await AsyncStorage.setItem(key, JSON.stringify(state));
-      } catch (error) {
-        Alert.alert(
-          i18n.t('vpl3_error_to_saved_program'),
-          JSON.stringify(error),
-        );
-      }
-    };
-
-    _saveState();
-  }, [state, key]);
-
-  return [state, setState, asyncSetState];
-}
-
-function App({navigation}: any): JSX.Element {
-  const {language, i18n} = useLanguage();
-  const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
+  const { uuid, name, address, port } = props.route.params;
+  const appURI = `file:///android_asset/scratch/index.html?device=${uuid}&ws=ws://${address}:${port}`
+  const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
-  const [LTServices, setLTServices] = useState({});
   const isDarkMode = useColorScheme() === 'dark';
-  const [cycle, setCycle] = useState(2);
-  const [first, setFirst] = useState(true);
-  const [webview, setWebview] = useState('scanner');
-  const [queryParams, setQueryParams] = useState<any>({});
   const [url, setUrl] = useState<string>('');
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('vpl3-program');
@@ -108,30 +44,27 @@ function App({navigation}: any): JSX.Element {
   };
 
   const onBackPress = () => {
-    webview !== 'scratch'
-      ? navigation.dispatch(CommonActions.goBack())
-      : Alert.alert(
-          i18n.t('vpl3_confirm_quit1'),
-          i18n.t('vpl3_confirm_quit2'),
-          [
-            {
-              text: i18n.t('scratch_cancel'),
-              onPress: () => console.log('Annulation'),
-              style: 'cancel',
-            },
-            {
-              text: i18n.t('scratch_quit'),
-              onPress: () => {
-                navigation.dispatch(CommonActions.goBack());
-              },
-            },
-          ],
-          {cancelable: true},
-        );
+    Alert.alert(
+      i18n.t('vpl3_confirm_quit1'),
+      i18n.t('vpl3_confirm_quit2'),
+      [
+        {
+          text: i18n.t('scratch_cancel'),
+          onPress: () => console.log('Annulation'),
+          style: 'cancel',
+        },
+        {
+          text: i18n.t('scratch_quit'),
+          onPress: () => {
+            props.navigation.dispatch(CommonActions.goBack());
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   const shareFile = async (filePath: any) => {
-    console.log(`Intentando compartir archivo: ${filePath}`); // Asegúrate de que esto se imprima
     try {
       const shareResponse = await Share.open({
         url: `file://${filePath}`,
@@ -226,15 +159,20 @@ function App({navigation}: any): JSX.Element {
   };
 
   useEffect(() => {
-    navigation.setOptions({
+    props.navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
-          <LaucherIcon />
-          {webview === 'scratch' ? (
-            <Text style={styles.titleBar}>{`${queryParams?.name}`}</Text>
-          ) : (
-            <Text style={styles.titleBar}>SCRATCH</Text>
-          )}
+          <LauncherIcon />
+          <Text style={styles.titleBar}>
+            {name}
+          </Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <View>
+          <TouchableOpacity onPress={() => onBackPress()}>
+            <BackIcon />
+          </TouchableOpacity>
         </View>
       ),
       headerRight: () => (
@@ -248,36 +186,12 @@ function App({navigation}: any): JSX.Element {
             <HelpIcon />
           </TouchableOpacity>
           <View style={{width: 10}} />
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <CloseIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerLeft: () => (
-        <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <BackIcon />
-          </TouchableOpacity>
         </View>
       ),
       headerTitleAlign: 'center',
       headerBackVisible: false,
     });
-  }, [navigation, webview, webViewRef]);
-
-  /*
-  useEffect(() => {
-    const fetchServices = async () => {
-      const services = await tdmDiscoveryService.scan();
-      console.log('[FOUND SERVICES]', services);
-      setLTServices(services);
-    }
-
-    fetchServices();
-  }, []);
-  */
-
-  const [host, setHost] = useState<string | undefined>(undefined);
+  }, [webViewRef]);
 
   const handleOnMessage = (event: {nativeEvent: {data: any}}) => {
     const _data = event.nativeEvent.data;
@@ -311,32 +225,6 @@ function App({navigation}: any): JSX.Element {
     }
   };
 
-  const deberíaDescargar = useCallback((_url: string) => {
-    return _url.includes('blob:');
-  }, []);
-
-  const handleNavigationStateChange = useCallback(
-    (event: any) => {
-      if (Platform.OS === 'android') {
-        if (event.title === 'Scratch 3.0 GUI') {
-          setWebview('scratch');
-          setQueryParams(getQueryParams(event.url));
-          setUrl(event.url);
-        }
-        return;
-      }
-
-      if (deberíaDescargar(event.url)) {
-        webViewRef.current?.stopLoading();
-      } else {
-        setWebview(getPathAfterLocalhost(event.url));
-        setQueryParams(getQueryParams(event.url));
-        setUrl(event.url);
-      }
-    },
-    [deberíaDescargar],
-  );
-
   const handleSave = () => {
     saveJsonFile(dialogVisible, fileName + '.sb3');
     setDialogVisible(null);
@@ -348,45 +236,11 @@ function App({navigation}: any): JSX.Element {
         if (supported) {
           Linking.openURL(_url);
         } else {
-          Alert.alert('Error', `No se puede manejar la URL: ${_url}`);
+          Alert.alert(i18n.t('error'), i18n.t('can_not_open_url'));
         }
       })
       .catch(err => console.error('An error occurred', err));
   };
-
-  useEffect(() => {
-    const newHost = 'file:///android_asset';
-
-    setHost(newHost);
-    setUrl(
-      `${newHost}/scanner/index.html?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify(
-        {
-          interface: 'scratch',
-          redirect: 'file:///android_asset/scratch/index.html',
-        },
-      )}&lang=${language}&isTablet=${JSON.stringify(isTablet)}`,
-    );
-  }, [Platform.OS, LTServices, language]);
-
-  if (host === undefined || url === '') {
-    return (
-      <SafeAreaView style={styles.root}>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={backgroundStyle.backgroundColor}
-        />
-        <View style={{marginTop: 22}} />
-        <View style={styles.rootHiddenContainer}>
-          <View style={styles.hiddenContainer}>
-            <View style={{height: 25}} />
-            <View style={styles.root}>
-              <Text>{i18n.t('common_loading')}</Text>
-            </View>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -423,21 +277,20 @@ function App({navigation}: any): JSX.Element {
             />
           </Dialog.Container>
           <WebView
+            source={{
+              uri: encodedURI,
+            }}
             onMessage={handleOnMessage}
             ref={webViewRef}
             startInLoadingState
             originWhitelist={['*']}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            source={{
-              uri: url,
-            }}
             style={{flex: 1}}
             onError={syntheticEvent => {
               const {nativeEvent} = syntheticEvent;
               console.warn('WebView error: ', nativeEvent);
             }}
-            onNavigationStateChange={handleNavigationStateChange}
             onShouldStartLoadWithRequest={(webRequest: WebViewNavigation) => {
               console.log('request.url::--->', webRequest.url);
 
