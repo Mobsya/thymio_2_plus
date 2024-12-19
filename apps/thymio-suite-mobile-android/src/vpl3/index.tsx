@@ -1,46 +1,40 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {MutableRefObject, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
-  Text,
   useColorScheme,
   View,
   Dimensions,
-  TouchableOpacity,
   Linking,
   Alert,
-  Platform,
   PermissionsAndroid,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
-import LaucherIcon from '../assets/launcher-icon-vpl';
-import BackIcon from '../assets/back-icon';
-import CloseIcon from '../assets/launcher-icon-close';
-import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
 
-import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
+import {getQueryParams} from '../helpers/parsers';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useLanguage} from '../i18n';
+import {i18n, useLanguage} from '../i18n';
 
 import DocumentPicker from 'react-native-document-picker';
-import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
-import DeviceInfo from 'react-native-device-info';
-import { RobotService } from '../services/RobotService';
-
-const isTablet = DeviceInfo.isTablet();
-
-const tdmDiscoveryService = new RobotService();
+import LauncherIcon from '../assets/launcher-icon-vpl';
+import BackIcon from '../assets/back-icon';
+import HelpIcon from '../assets/launcher-icon-help-blue';
+import webview from '../components/webview';
+import { I18n } from 'i18n-js';
+import Toast from 'react-native-simple-toast';
 
 function usePersistentState(key: any, initialValue: any) {
-  const {language, i18n} = useLanguage();
+  const {i18n} = useLanguage();
 
   const [state, setState] = useState(initialValue);
 
@@ -94,35 +88,69 @@ async function requestStoragePermission(callback: () => void) {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       {
-        title: 'Cool Photo App Camera Permission',
-        message:
-          'Cool Photo App needs access to your camera ' +
-          'so you can take awesome pictures.',
-        buttonNeutral: 'Ask Me Later',
+        title: i18n.t('storage_permission_title'),
+        message: i18n.t('storage_permission_description'),
         buttonNegative: 'Cancel',
         buttonPositive: 'OK',
       },
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('You can use the camera');
-    } else {
-      console.log('Camera permission denied');
       callback();
+    } else {
+      Toast.showWithGravity(i18n.t('could_not_open_file'), Toast.LONG, Toast.BOTTOM);
     }
   } catch (err) {
     console.warn(err);
   }
 }
 
-function App({navigation}: any): JSX.Element {
+const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
+    Alert.alert(
+        i18n.t('vpl3_confirm_quit1'),
+        i18n.t('vpl3_confirm_quit2'),
+        [
+          {
+            text: i18n.t('vpl3_quit_calcel'),
+            onPress: () => console.log('Annulation'),
+            style: 'cancel',
+          },
+          {
+            text: i18n.t('vpl3_quit_without_save'),
+            onPress: () => {
+              webViewRef.current.postMessage(
+                JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
+              );
+            },
+          },
+          {
+            text: i18n.t('vpl3_quit_with_save'),
+            onPress: () => {
+              if (webViewRef.current) {
+                webViewRef.current.postMessage(
+                  JSON.stringify({
+                    action: 'getProgram',
+                    spec: 'toSaveAndQuit',
+                  }),
+                );
+              } else {
+                console.log('webViewRef.current no existe');
+              }
+            },
+          },
+        ],
+        {cancelable: true},
+      );
+};
+
+function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
-  const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
+
+  const { name, uuid, address, port } = props.route.params;
+  const appURI = `file:///android_asset/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
+  const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
-  const [LTServices, setLTServices] = useState({});
   const isDarkMode = useColorScheme() === 'dark';
-  const [lasUrl, setLastUrl] = useState('');
-  const [webview, setWebview] = useState('scanner');
   const [queryParams, setQueryParams] = useState<any>({});
   const [url, setUrl] = useState<string>('');
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
@@ -189,46 +217,6 @@ function App({navigation}: any): JSX.Element {
     }
   };
 
-  const onBackPress = () => {
-    console.log('webview', webview);
-    webview !== 'vpl3'
-      ? navigation.dispatch(CommonActions.goBack())
-      : Alert.alert(
-          i18n.t('vpl3_confirm_quit1'),
-          i18n.t('vpl3_confirm_quit2'),
-          [
-            {
-              text: i18n.t('vpl3_quit_calcel'),
-              onPress: () => console.log('Annulation'),
-              style: 'cancel',
-            },
-            {
-              text: i18n.t('vpl3_quit_without_save'),
-              onPress: () => {
-                webViewRef.current.postMessage(
-                  JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
-                );
-              },
-            },
-            {
-              text: i18n.t('vpl3_quit_with_save'),
-              onPress: () => {
-                if (webViewRef.current) {
-                  webViewRef.current.postMessage(
-                    JSON.stringify({
-                      action: 'getProgram',
-                      spec: 'toSaveAndQuit',
-                    }),
-                  );
-                } else {
-                  console.log('webViewRef.current no existe');
-                }
-              },
-            },
-          ],
-          {cancelable: true},
-        );
-  };
 
   const shareFile = async (filePath: any) => {
     console.log(`Intentando compartir archivo: ${filePath}`);
@@ -248,6 +236,7 @@ function App({navigation}: any): JSX.Element {
     quit: boolean,
   ) => {
     try {
+      console.log('JSON', jsonData);
       console.log('The document directory is: ', ReactNativeBlobUtil.fs.dirs);
 
       const documentDir = ReactNativeBlobUtil.fs.dirs.LegacyDownloadDir;
@@ -257,6 +246,7 @@ function App({navigation}: any): JSX.Element {
       }
 
       const path = `${documentDir}/${filename}`;
+      console.log('THE path is', path)
 
       await ReactNativeBlobUtil.fs.writeFile(path, jsonData, 'utf8');
       console.log('The file saved successfully in path:', path);
@@ -266,7 +256,7 @@ function App({navigation}: any): JSX.Element {
           {
             text: i18n.t('scratch_save_continue'),
             onPress: () => {
-              navigation.dispatch(CommonActions.goBack());
+              props.navigation.dispatch(CommonActions.goBack());
             },
           },
         ]);
@@ -288,80 +278,6 @@ function App({navigation}: any): JSX.Element {
       console.error('Error saving the JSON file:', error);
     }
   };
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => (
-        <View style={styles.titleContainer}>
-          <LaucherIcon />
-          {webview === 'vpl3' ? (
-            <Text style={styles.titleBar}>{`${queryParams?.name}`}</Text>
-          ) : (
-            <Text style={styles.titleBar}>VPL3</Text>
-          )}
-        </View>
-      ),
-      headerRight: () => (
-        <View style={styles.titleContainer}>
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL(
-                'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-en-vpl3/',
-              )
-            }>
-            <HelpIcon />
-          </TouchableOpacity>
-          <View style={{width: 10}} />
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <CloseIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerLeft: () => (
-        <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <BackIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerTitleAlign: 'center',
-      headerBackVisible: false,
-    });
-  }, [navigation, webview, webViewRef]);
-
-  /*
-  useEffect(() => {
-    const fetchServices = async () => {
-      const services = await tdmDiscoveryService.scan();
-      console.log('[FOUND SERVICES]', services);
-      setLTServices(services);
-    };
-
-    fetchServices();
-  }, []);
-  */
-
-  /*
-  useEffect(() => {
-    if (services) {
-      const names = data
-        .filter((options: any) => options.isAceepted)
-        .map((item: any) => item.name);
-      const servicesLT = {...services};
-
-      const resutl = Object.entries(servicesLT)
-        .map(([key, value]) => ({
-          key,
-          ...value,
-        }))
-        .filter((item: any) => names.includes(item.key))
-        .reduce((acc: any, item: any) => ({...acc, [item.key]: item}), {});
-
-      setLTServices(resutl);
-      setFirst(false);
-    }
-  }, [services]);
-  */
 
   const injectedJavaScript = useMemo(() => {
     const js = `
@@ -413,7 +329,39 @@ function App({navigation}: any): JSX.Element {
   }, [config]);
 
   const [quit, setQuit] = useState(false);
-  const [host, setHost] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    props.navigation.setOptions({
+      headerTitle: () => (
+        <View style={styles.titleContainer}>
+          <LauncherIcon />
+          <Text style={styles.titleBar}>{name}</Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <View>
+          <TouchableOpacity onPress={() => onBackPress(webViewRef, i18n)}>
+            <BackIcon />
+          </TouchableOpacity>
+        </View>
+      ),
+      headerRight: () => (
+        <View style={styles.titleContainer}>
+          <TouchableOpacity
+            onPress={() =>
+              Linking.openURL(
+                'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-en-vpl3/',
+              )
+            }>
+            <HelpIcon />
+          </TouchableOpacity>
+          <View style={{width: 10}} />
+        </View>
+      ),
+      headerTitleAlign: 'center',
+      headerBackVisible: false,
+    });
+  }, [webview, webViewRef]);
 
   const handleOnMessage = (event: {nativeEvent: {data: any}}) => {
     const _data = event.nativeEvent.data;
@@ -429,18 +377,14 @@ function App({navigation}: any): JSX.Element {
 
     const objectData = JSON.parse(_data);
 
-    if (objectData.spec === 'openUrl') {
-      const newHost = 'file:///android_asset';
-      console.log('newHost::1:->', newHost + objectData.url);
-      setUrl(newHost + objectData.url);
-    } else if (objectData.spec === 'toSaveAndQuit') {
+    if (objectData.spec === 'toSaveAndQuit') {
       asyncSetConfig(JSON.parse(objectData.saved), () => {
         setQuit(true);
         setDialogVisible(objectData);
       });
     } else if (objectData.spec === 'toQuit' || objectData.saved) {
       asyncSetConfig(JSON.parse(objectData.saved), () => {
-        navigation.dispatch(CommonActions.goBack());
+        props.navigation.dispatch(CommonActions.goBack());
       });
     } else {
       Alert.alert(
@@ -489,7 +433,6 @@ function App({navigation}: any): JSX.Element {
   const handleNavigationStateChange = useCallback(
     (event: any) => {
       if (event.title === 'VPL') {
-        setWebview('vpl3');
         setQueryParams(getQueryParams(event.url));
         console.log('newHost::2:->', event.url);
         setUrl(event.url);
@@ -510,62 +453,11 @@ function App({navigation}: any): JSX.Element {
         if (supported) {
           Linking.openURL(_url);
         } else {
-          Alert.alert('Error', `No se puede manejar la URL: ${_url}`);
+          Alert.alert(i18n.t('error'), i18n.t('can_not_open_url'));
         }
       })
       .catch(err => console.error('An error occurred', err));
   };
-
-  /*
-  useEffect(() => {
-    const newHost = 'file:///android_asset';
-
-    setHost(newHost);
-    console.log(
-      'newHost::4:->',
-      `${newHost}/scanner/index.html?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify(
-        {
-          interface: 'vpl3',
-          redirect: 'file:///android_asset/vpl3/index.html',
-        },
-      )}&lang=${language}&isTablet=${JSON.stringify(isTablet)}`,
-    );
-    setUrl(
-      `${newHost}/scanner/index.html?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify(
-        {
-          interface: 'vpl3',
-          redirect: 'file:///android_asset/vpl3/index.html',
-        },
-      )}&lang=${language}&isTablet=${JSON.stringify(isTablet)}`,
-    );
-  }, [Platform.OS, LTServices, language]);
-  */
-
-  useEffect(() => {
-    setTimeout(() => {
-      setLastUrl(url);
-    }, 250);
-  }, [url]);
-
-  if (host === undefined || url === '') {
-    return (
-      <SafeAreaView style={styles.root}>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={backgroundStyle.backgroundColor}
-        />
-        <View style={{marginTop: 22}} />
-        <View style={styles.rootHiddenContainer}>
-          <View style={styles.hiddenContainer}>
-            <View style={{height: 25}} />
-            <View style={styles.root}>
-              <Text>{i18n.t('common_loading')}</Text>
-            </View>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -602,6 +494,9 @@ function App({navigation}: any): JSX.Element {
             />
           </Dialog.Container>
           <WebView
+            source={{
+              uri: encodedURI,
+            }}
             onMessage={handleOnMessage}
             ref={webViewRef}
             style={{
@@ -613,9 +508,6 @@ function App({navigation}: any): JSX.Element {
             originWhitelist={['*']}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            source={{
-              uri: url,
-            }}
             injectedJavaScript={injectedJavaScript}
             onError={syntheticEvent => {
               const {nativeEvent} = syntheticEvent;
