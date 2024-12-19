@@ -11,7 +11,7 @@ import {
 import {useFirstUseState} from './hooks/useFirstTime';
 import Logo from './assets/logo-thymio';
 import ThymioLeftSide from './assets/thymio-left-side';
-import {Menu} from './components/Sidebar/menu';
+import {Menu} from './components/Menu';
 import {LanguageSelector, useLanguage} from './i18n';
 import DeviceInfo from 'react-native-device-info';
 import FullScreenModal from './components/Modal';

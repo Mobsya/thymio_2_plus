@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {useFirstUseState} from './hooks/useFirstTime';
 import Logo from './assets/logo-thymio';
-import {Menu} from './components/Sidebar/menu';
+import {Menu} from './components/Menu';
 import {LanguageSelector, useLanguage} from './i18n';
 
 const StartVue = ({setStartVue}: any) => {
