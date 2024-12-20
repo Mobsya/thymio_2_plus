@@ -208,11 +208,12 @@ function App(props: any): JSX.Element {
       webViewRef.current.postMessage(
         JSON.stringify({action: 'setProgram', program: file}),
       );
-    } catch (err) {
+    } catch (err: unknown) {
       if (DocumentPicker.isCancel(err)) {
-        console.log('Selección de archivo cancelada');
+        console.log('File selection cancelled');
       } else {
-        console.log('Error al seleccionar el archivo:', err);
+        console.log('Error selecting file:', err);
+        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
       }
     }
   };
@@ -274,8 +275,9 @@ function App(props: any): JSX.Element {
       );
 
       return path;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving the JSON file:', error);
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 

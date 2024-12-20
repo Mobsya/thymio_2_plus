@@ -22,6 +22,7 @@ import LauncherIcon from '../assets/launcher-icon-scratch';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
+import Toast from 'react-native-simple-toast';
 
 import {useLanguage} from '../i18n';
 
@@ -69,9 +70,10 @@ function App(props: any): JSX.Element {
       const shareResponse = await Share.open({
         url: `file://${filePath}`,
       });
-      console.log('Archivo compartido con éxito:', shareResponse);
+      console.log('File shared successfully:', shareResponse);
     } catch (error) {
-      console.log('Error al compartir el archivo:', error);
+      console.log('Could not share file:', error);
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 
@@ -155,6 +157,7 @@ function App(props: any): JSX.Element {
       );
     } catch (error) {
       console.error('Error saving the JSON file:', error);
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 
