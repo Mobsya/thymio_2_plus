@@ -1,18 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-
-/* eslint-disable react-hooks/exhaustive-deps */
-
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react-native/no-inline-styles */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {MutableRefObject, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -24,29 +10,30 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Platform,
 } from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
-import LaucherIcon from '../assets/launcher-icon-vpl';
 import BackIcon from '../assets/back-icon';
-import CloseIcon from '../assets/launcher-icon-close';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
 
-import {useTdm} from '../hooks/useTdm';
-import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
+import {getPathAfterLocalhost} from '../helpers/parsers';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useLanguage} from '../i18n';
 
 import DocumentPicker from 'react-native-document-picker';
-import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
+import { I18n } from 'i18n-js';
+import Toast from 'react-native-simple-toast';
+
+import LauncherIcon from '../assets/launcher-icon-vpl';
 
 function usePersistentState(key: any, initialValue: any) {
-  const {language, i18n} = useLanguage();
+  const {i18n} = useLanguage();
 
   const [state, setState] = useState(initialValue);
 
@@ -95,19 +82,54 @@ function usePersistentState(key: any, initialValue: any) {
   return [state, setState, asyncSetState];
 }
 
-function App({navigation, serverUrl }: any): JSX.Element {
+const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
+  Alert.alert(
+      i18n.t('vpl3_confirm_quit1'),
+      i18n.t('vpl3_confirm_quit2'),
+      [
+        {
+          text: i18n.t('vpl3_quit_calcel'),
+          onPress: () => console.log('Annulation'),
+          style: 'cancel',
+        },
+        {
+          text: i18n.t('vpl3_quit_without_save'),
+          onPress: () => {
+            webViewRef.current.postMessage(
+              JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
+            );
+          },
+        },
+        {
+          text: i18n.t('vpl3_quit_with_save'),
+          onPress: () => {
+            if (webViewRef.current) {
+              webViewRef.current.postMessage(
+                JSON.stringify({
+                  action: 'getProgram',
+                  spec: 'toSaveAndQuit',
+                }),
+              );
+            } else {
+              console.log('webViewRef.current no existe');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+};
+
+function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
-  const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
+
+  const { name, uuid, address, port } = props.route.params;
+  const appURI = `http://127.0.0.1:3000/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
+  const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
-  const [LTServices, setLTServices] = useState({});
-  const {services, status, discovery} = useTdm();
   const isDarkMode = useColorScheme() === 'dark';
-  const [cycle, setCycle] = useState(2);
-  const [first, setFirst] = useState(true);
   const [webview, setWebview] = useState('scanner');
-  const [queryParams, setQueryParams] = useState<any>({});
-  const [url, setUrl] = useState<string | undefined>(undefined);
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('vpl3-program');
   const [config, setConfig, asyncSetConfig] = usePersistentState('vpl3Config', {
@@ -146,76 +168,38 @@ function App({navigation, serverUrl }: any): JSX.Element {
       });
 
       const res = results[0];
+      console.log("RESULT", res)
 
-      // Res contiene varias propiedades, incluyendo URI, tipo, nombre del archivo, tamaño, etc.
       console.log('URI:', res.uri);
       console.log('Tipo:', res.type);
       console.log('Nombre del archivo:', res.name);
       console.log('Tamaño:', res.size);
 
+      let filePath: string;
+      if(Platform.OS === 'ios') {
+        let arr = res.uri.split('/');
+        const dirs = ReactNativeBlobUtil.fs.dirs;
+        filePath = `${dirs.DocumentDir}/${arr[arr.length - 1]}`;
+      } else {
+        filePath = res.uri;
+      }
+
       // read file from uri
       const file = await ReactNativeBlobUtil.fs.readFile(
-        res.uri.replaceAll('file:///private', ''),
+        filePath,
         'utf8',
       );
 
-      console.log('File:', file);
-
       setConfig(JSON.parse(file));
-
-      console.log('Programa cargado');
       webViewRef.current.reload();
-
-      // Aquí puedes manejar el objeto JSON como necesites
-    } catch (err) {
+    } catch (err: unknown) {
       if (DocumentPicker.isCancel(err)) {
-        console.log('Selección de archivo cancelada');
+        console.log('File selection cancelled');
       } else {
-        console.log('Error al seleccionar el archivo:', err);
+        console.log('Error selecting file:', err);
+        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
       }
     }
-  };
-
-  const onBackPress = () => {
-    console.log('webview', webview);
-    webview !== 'vpl3'
-      ? navigation.dispatch(CommonActions.goBack())
-      : Alert.alert(
-          i18n.t('vpl3_confirm_quit1'),
-          i18n.t('vpl3_confirm_quit2'),
-          [
-            {
-              text: i18n.t('vpl3_quit_calcel'),
-              onPress: () => console.log('Annulation'),
-              style: 'cancel',
-            },
-            {
-              text: i18n.t('vpl3_quit_without_save'),
-              onPress: () => {
-                webViewRef.current.postMessage(
-                  JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
-                );
-              },
-            },
-            {
-              text: i18n.t('vpl3_quit_with_save'),
-              onPress: () => {
-                // navigation.dispatch(CommonActions.goBack());
-                if (webViewRef.current) {
-                  webViewRef.current.postMessage(
-                    JSON.stringify({
-                      action: 'getProgram',
-                      spec: 'toSaveAndQuit',
-                    }),
-                  );
-                } else {
-                  console.log('webViewRef.current no existe');
-                }
-              },
-            },
-          ],
-          {cancelable: true},
-        );
   };
 
   const shareFile = async (filePath: any) => {
@@ -259,7 +243,7 @@ function App({navigation, serverUrl }: any): JSX.Element {
           {
             text: i18n.t('scratch_save_continue'),
             onPress: () => {
-              navigation.dispatch(CommonActions.goBack());
+              props.navigation.dispatch(CommonActions.goBack());
             },
           },
         ]);
@@ -278,22 +262,27 @@ function App({navigation, serverUrl }: any): JSX.Element {
       );
 
       return path;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving the JSON file:', error);
-      // Considera mostrar un mensaje de error al usuario
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 
-  React.useEffect(() => {
-    navigation.setOptions({
+  useEffect(() => {
+    props.navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
-          <LaucherIcon />
-          {webview === 'vpl3' ? (
-            <Text style={styles.titleBar}>{`${queryParams?.name}`}</Text>
-          ) : (
-            <Text style={styles.titleBar}>VPL3</Text>
-          )}
+          <LauncherIcon />
+          <Text style={styles.titleBar}>
+            {name}
+          </Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <View>
+          <TouchableOpacity onPress={() => onBackPress(webViewRef, i18n)}>
+            <BackIcon />
+          </TouchableOpacity>
         </View>
       ),
       headerRight: () => (
@@ -307,70 +296,17 @@ function App({navigation, serverUrl }: any): JSX.Element {
             <HelpIcon />
           </TouchableOpacity>
           <View style={{width: 10}} />
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <CloseIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerLeft: () => (
-        <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <BackIcon />
-          </TouchableOpacity>
         </View>
       ),
       headerTitleAlign: 'center',
+      headerBackVisible: false,
     });
-  }, [navigation, webview, webViewRef]);
+  }, [webview, webViewRef]);
 
-  useEffect(() => {
-    discovery.scan();
-  }, []);
-
-  useEffect(() => {
-    if (services) {
-      if (
-        (first && JSON.stringify(services) !== '{}') ||
-        (cycle >= 2 &&
-          JSON.stringify(LTServices) !== JSON.stringify(services)) ||
-        (JSON.stringify(LTServices) === '{}' &&
-          JSON.stringify(services) !== '{}') ||
-        (JSON.stringify(LTServices) !== JSON.stringify(services) &&
-          JSON.stringify(services) !== '{}')
-      ) {
-        const names = data
-          .filter((options: any) => options.isAceepted)
-          .map((item: any) => item.name);
-        const servicesLT = {...services};
-
-        const resutl = Object.entries(servicesLT)
-          .map(([key, value]) => ({
-            key,
-            ...value,
-          }))
-          .filter((item: any) => names.includes(item.key))
-          .reduce((acc: any, item: any) => ({...acc, [item.key]: item}), {});
-
-        setLTServices(resutl);
-        setFirst(false);
-      }
-
-      if (
-        cycle < 2 &&
-        JSON.stringify(services) === '{}' &&
-        JSON.stringify(LTServices) !== '{}'
-      ) {
-        setCycle(cycle + 1);
-      } else {
-        setCycle(0);
-      }
-    }
-  }, [services]);
 
   const injectedJavaScript = useMemo(() => {
-    // console.log('config changed in MEMO');
     const js = `
-  
+
       function handleMessage(event) {
         try {
           const data = JSON.parse(event.data);
@@ -382,10 +318,10 @@ function App({navigation, serverUrl }: any): JSX.Element {
           console.error('Error procesando el mensaje:', e);
         }
       }
-  
+
       document.addEventListener('message', handleMessage);
       window.addEventListener('message', handleMessage);
-  
+
       window.addEventListener('click', function(e) {
         // Intercepta clics o solicitudes de descarga y envía el contenido a React Native
         if (e.target.href && e.target.href.startsWith('blob:')) {
@@ -403,7 +339,7 @@ function App({navigation, serverUrl }: any): JSX.Element {
           });
         }
       }, false);
-  
+
       window["vplStorageGetFunction"] = function (filename, load) {
         program = JSON.stringify(${JSON.stringify(config, null, 2)});
         load(program);
@@ -412,7 +348,6 @@ function App({navigation, serverUrl }: any): JSX.Element {
       true; // nota: siempre termina con true para evitar warnings
     `;
 
-    // console.log('injectedJavaScript', js);
     return js;
   }, [config]);
 
@@ -439,7 +374,7 @@ function App({navigation, serverUrl }: any): JSX.Element {
       });
     } else if (objectData.spec === 'toQuit' || objectData.saved) {
       asyncSetConfig(JSON.parse(objectData.saved), () => {
-        navigation.dispatch(CommonActions.goBack());
+        props.navigation.dispatch(CommonActions.goBack());
       });
     } else {
       Alert.alert(
@@ -480,30 +415,25 @@ function App({navigation, serverUrl }: any): JSX.Element {
     }
   };
 
-  const deberíaDescargar = useCallback((_url: string) => {
-    // Ajusta esta lógica según tus necesidades
-    return _url.includes('blob:'); // Ejemplo para archivos JSON
+  const isDownloadAction = useCallback((_url: string) => {
+    return _url.includes('blob:');
   }, []);
 
   const handleNavigationStateChange = useCallback(
     (event: any) => {
-      // console.log('Evento de navegación:', event.url);
-      if (deberíaDescargar(event.url)) {
+      if (isDownloadAction(event.url)) {
         // Detiene la carga en el WebView y maneja la descarga
         webViewRef.current?.stopLoading();
       } else {
         // Si no es una descarga, pasa el evento a la función onChange propuesta
 
         setWebview(getPathAfterLocalhost(event.url));
-        setQueryParams(getQueryParams(event.url));
-        setUrl(event.url);
       }
     },
-    [deberíaDescargar],
+    [isDownloadAction],
   );
 
   const handleSave = () => {
-    // setConfig(dialogVisible);
     saveJsonFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
     setDialogVisible(null);
   };
@@ -514,7 +444,7 @@ function App({navigation, serverUrl }: any): JSX.Element {
         if (supported) {
           Linking.openURL(_url);
         } else {
-          Alert.alert('Error', `No se puede manejar la URL: ${_url}`);
+          Alert.alert(i18n.t('error'), i18n.t('can_not_open_url'));
         }
       })
       .catch(err => console.error('An error occurred', err));
@@ -555,19 +485,15 @@ function App({navigation, serverUrl }: any): JSX.Element {
         <View style={styles.hiddenContainer}>
           <View style={{height: 25}} />
           <WebView
+            source={{
+              uri: encodedURI
+            }}
             onMessage={handleOnMessage}
             ref={webViewRef}
             startInLoadingState
             originWhitelist={['*']}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            source={{
-              uri: `http://127.0.0.1:3000/scanner/index.html?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify(
-                {
-                  interface: 'vpl3',
-                },
-              )}&lang=${language}`,
-            }}
             injectedJavaScript={injectedJavaScript}
             style={{flex: 1}}
             onError={syntheticEvent => {

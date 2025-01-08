@@ -1,12 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {useState} from 'react';
+import React from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -18,14 +10,14 @@ import {
   Image,
 } from 'react-native';
 import Logo from './assets/logo-thymio';
-import {Menu} from './components/Sidebar/menu';
 import {useLoading} from './App';
-import {LanguageSelector, useLanguage} from './i18n';
+import {useLanguage} from './i18n';
+import { Menu } from './components/Menu';
 
 function App({navigation}: any): JSX.Element {
-  const {language, i18n} = useLanguage();
+  const {i18n} = useLanguage();
 
-  const {loading} = useLoading();
+  const {loading, setLoading} = useLoading();
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -46,7 +38,7 @@ function App({navigation}: any): JSX.Element {
           backgroundColor={backgroundStyle.backgroundColor}
           hidden
         />
-        <Menu onSelect={option => navigation.navigate(option)} />
+        <Menu setLoading={setLoading}/>
         <View style={styles.containerTitle}>
           <Logo />
           <Text style={styles.titleText}>{i18n.t('common_loading')}</Text>
@@ -62,7 +54,7 @@ function App({navigation}: any): JSX.Element {
         backgroundColor={backgroundStyle.backgroundColor}
         hidden
       />
-      <Menu onSelect={option => console.log(option)} />
+      <Menu setLoading={setLoading}/>
 
       <View style={styles.containerTitle}>
         <Logo />
@@ -80,18 +72,20 @@ function App({navigation}: any): JSX.Element {
             name: 'Scratch',
           },
         ].map(({logo, name}) => (
-          <TouchableOpacity
-            key={name}
-            onPress={() => navigation.navigate(name)}>
-            <View style={{...styles.Apps}}>
-              <Image style={styles.stretch} source={logo} />
-              <Text>{name}</Text>
-            </View>
-          </TouchableOpacity>
+         <TouchableOpacity
+          key={name}
+          onPress={() => navigation.navigate('RobotSelect', { programmingEnv: name })}>
+          <View style={{...styles.Apps}}>
+            <Image
+              style={styles.stretch}
+              source={logo}
+            />
+          </View>
+        </TouchableOpacity>
         ))}
       </View>
       <View style={styles.containerFooter}>
-        <Text>Thymio Suite Mobile App v.3.1.5</Text>
+        <Text>v3.3.0</Text>
       </View>
     </View>
   );

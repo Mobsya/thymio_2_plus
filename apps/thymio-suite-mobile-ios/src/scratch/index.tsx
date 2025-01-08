@@ -1,18 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-
-/* eslint-disable react-hooks/exhaustive-deps */
-
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react-native/no-inline-styles */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -27,33 +13,26 @@ import {
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import {WebView, WebViewNavigation} from 'react-native-webview';
-import LaucherIcon from '../assets/launcher-icon-scratch';
+import LauncherIcon from '../assets/launcher-icon-scratch';
 import BackIcon from '../assets/back-icon';
-import CloseIcon from '../assets/launcher-icon-close';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions} from '@react-navigation/native';
 
-import {useTdm} from '../hooks/useTdm';
-import {getPathAfterLocalhost, getQueryParams} from '../helpers/parsers';
 import {useLanguage} from '../i18n';
 
 import Share from 'react-native-share';
 
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import useAsyncStorageArray from '../components/Sidebar/useAccesTDM';
 
-function App({navigation}: any): JSX.Element {
+function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
-  const [data, setData] = useAsyncStorageArray('accessTDMServices', []);
+
+  const { uuid, name, address, port } = props.route.params;
+  const appURI = `http://127.0.0.1:3000/scratch/index.html?device=${uuid}&ws=ws://${address}:${port}`;
+  const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
-  const [LTServices, setLTServices] = useState({});
-  const {services, status, discovery} = useTdm();
   const isDarkMode = useColorScheme() === 'dark';
-  const [cycle, setCycle] = useState(2);
-  const [first, setFirst] = useState(true);
-  const [webview, setWebview] = useState('scanner');
-  const [queryParams, setQueryParams] = useState<any>({});
 
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('scratch-program');
@@ -62,15 +41,12 @@ function App({navigation}: any): JSX.Element {
     backgroundColor: '#201439',
   };
 
-  // Función para mostrar el diálogo
   const showDialog = (base64Data: string) => {
     setDialogVisible(base64Data);
   };
 
-  // Función que se llama cuando el usuario confirma el nombre del archivo
   const handleSave = () => {
     setDialogVisible(null);
-    console.log('El usuario ha elegido el nombre:', fileName);
     if (dialogVisible) {
       saveBase64File(dialogVisible, fileName + '.sb3');
     }
@@ -123,39 +99,42 @@ function App({navigation}: any): JSX.Element {
   };
 
   const onBackPress = () => {
-    webview !== 'scratch'
-      ? navigation.dispatch(CommonActions.goBack())
-      : // Mostrar una alerta al usuario antes de ir hacia atrás
-        Alert.alert(
-          i18n.t('vpl3_confirm_quit1'), // Título de la alerta
-          i18n.t('vpl3_confirm_quit2'), // Mensaje de la alerta
-          [
-            {
-              text: i18n.t('scratch_cancel'),
-              onPress: () => console.log('Annulation'), // No hace nada, solo cierra la alerta
-              style: 'cancel',
-            },
-            {
-              text: i18n.t('scratch_quit'),
-              onPress: () => navigation.dispatch(CommonActions.goBack()), // Si el usuario confirma, navega hacia atrás
-            },
-          ],
-          {cancelable: true}, // Permite cerrar la alerta tocando fuera de ella
-        );
+    // Mostrar una alerta al usuario antes de ir hacia atrás
+    Alert.alert(
+      i18n.t('vpl3_confirm_quit1'), // Título de la alerta
+      i18n.t('vpl3_confirm_quit2'), // Mensaje de la alerta
+      [
+        {
+          text: i18n.t('scratch_cancel'),
+          onPress: () => console.log('Annulation'), // No hace nada, solo cierra la alerta
+          style: 'cancel',
+        },
+        {
+          text: i18n.t('scratch_quit'),
+          onPress: () => {
+            props.navigation.dispatch(CommonActions.goBack())
+          }
+        },
+      ],
+      {cancelable: true}, // Permite cerrar la alerta tocando fuera de ella
+    );
   };
 
-  React.useEffect(() => {
-    // Use `setOptions` to update the button that we previously specified
-    // Now the button includes an `onPress` handler to update the count
-    navigation.setOptions({
+  useEffect(() => {
+    props.navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
-          <LaucherIcon />
-          {webview === 'scratch' ? (
-            <Text style={styles.titleBar}>{`${queryParams?.name}`}</Text>
-          ) : (
-            <Text style={styles.titleBar}>Scratch</Text>
-          )}
+          <LauncherIcon />
+          <Text style={styles.titleBar}>
+            {name}
+          </Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <View>
+          <TouchableOpacity onPress={() => onBackPress()}>
+            <BackIcon />
+          </TouchableOpacity>
         </View>
       ),
       headerRight: () => (
@@ -169,74 +148,12 @@ function App({navigation}: any): JSX.Element {
             <HelpIcon />
           </TouchableOpacity>
           <View style={{width: 10}} />
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <CloseIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerLeft: () => (
-        <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <BackIcon />
-          </TouchableOpacity>
         </View>
       ),
       headerTitleAlign: 'center',
+      headerBackVisible: false,
     });
-  }, [navigation, webview]);
-
-  useEffect(() => {
-    discovery.scan();
-  }, []);
-
-  useEffect(() => {
-    if (services) {
-      if (
-        (first && JSON.stringify(services) !== '{}') ||
-        (cycle >= 2 &&
-          JSON.stringify(LTServices) !== JSON.stringify(services)) ||
-        (JSON.stringify(LTServices) === '{}' &&
-          JSON.stringify(services) !== '{}') ||
-        (JSON.stringify(LTServices) !== JSON.stringify(services) &&
-          JSON.stringify(services) !== '{}')
-      ) {
-        const names = data
-          .filter((options: any) => options.isAceepted)
-          .map((item: any) => item.name);
-        const servicesLT = {...services};
-
-        const resutl = Object.entries(servicesLT)
-          .map(([key, value]) => ({
-            key,
-            ...value,
-          }))
-          .filter((item: any) => names.includes(item.key))
-          .reduce((acc: any, item: any) => ({...acc, [item.key]: item}), {});
-
-        setLTServices(resutl);
-        setFirst(false);
-      }
-
-      // compare services object with LTServices object and update LTServices only if there is a change
-      if (
-        cycle < 2 &&
-        JSON.stringify(services) === '{}' &&
-        JSON.stringify(LTServices) !== '{}'
-      ) {
-        setCycle(cycle + 1);
-      } else {
-        setCycle(0);
-      }
-
-      console.log(
-        'Cycle:',
-        'http://127.0.0.1:3000/scanner/index.html' +
-          `?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify({
-            interface: 'scratch',
-          })}&lang=${language}`,
-      );
-    }
-  }, [services]);
+  }, [webViewRef]);
 
   const handleOnMessage = async (event: {nativeEvent: {data: any}}) => {
     const _data = event.nativeEvent.data;
@@ -247,17 +164,6 @@ function App({navigation}: any): JSX.Element {
     console.log('HandleOnMessage:', type);
     showDialog(base64Data);
   };
-
-  const handleNavigationStateChange = useCallback((event: any) => {
-    // console.log('Evento de navegación:', event.url);
-    setWebview(getPathAfterLocalhost(event.url));
-    setQueryParams(getQueryParams(event.url));
-    // console.log('webview', event.url);
-  }, []);
-
-  const injectedJavaScript = `
-  true;
-`;
 
   const openURL = (_url: string) => {
     Linking.canOpenURL(_url)
@@ -279,7 +185,9 @@ function App({navigation}: any): JSX.Element {
       />
       <View style={{marginTop: 22}}>
         <Dialog.Container visible={dialogVisible !== null}>
-          <Dialog.Title>{i18n.t('scratch_saveForm_title')}</Dialog.Title>
+          <Dialog.Title>
+            {i18n.t('scratch_saveForm_title')}
+          </Dialog.Title>
           <Dialog.Description>
             {i18n.t('scratch_saveForm_info')}
           </Dialog.Description>
@@ -306,26 +214,20 @@ function App({navigation}: any): JSX.Element {
         <View style={styles.hiddenContainer}>
           <View style={{height: 25}} />
           <WebView
+            source={{
+              uri: encodedURI
+            }}
             onMessage={handleOnMessage}
             ref={webViewRef}
             startInLoadingState
             originWhitelist={['*']}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            source={{
-              uri:
-                'http://127.0.0.1:3000/scanner/index.html' +
-                `?data=${JSON.stringify({...LTServices})}&gl=${JSON.stringify({
-                  interface: 'scratch',
-                })}&lang=${language}`,
-            }}
-            injectedJavaScript={injectedJavaScript}
             style={{flex: 1}}
             onError={syntheticEvent => {
               const {nativeEvent} = syntheticEvent;
               console.warn('WebView error: ', nativeEvent);
             }}
-            onNavigationStateChange={handleNavigationStateChange}
             onShouldStartLoadWithRequest={(request: WebViewNavigation) => {
               // console.log('request.url::--->', request.url);
               if (request.url.includes('localhost')) {
@@ -340,7 +242,7 @@ function App({navigation}: any): JSX.Element {
                 return true;
               }
 
-              // openURL(request.url);
+              openURL(request.url);
               return true;
             }}
           />

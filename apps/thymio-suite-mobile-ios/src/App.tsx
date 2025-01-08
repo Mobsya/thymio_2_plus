@@ -1,25 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import StaticServer from 'react-native-static-server'; // Using the given implementation
-import RNFS from 'react-native-fs'; // Required for file system paths
+import RNFS from 'react-native-fs';
 import HomeScreen from './Home';
+import RobotSelect from './RobotSelect';
 import Scratch from './scratch';
-import Vpl3 from './vpl3';
-import Thymio2pConfigurator from './Thymio2pConfigurator';
+import VPL3 from './vpl3';
 
 const Stack = createNativeStackNavigator();
-
-// Define your static server states
-const STATES = {
-  ACTIVE: 'active',
-  STARTING: 'starting',
-  STOPPING: 'stopping',
-  CRASHED: 'crashed',
-  INACTIVE: 'inactive',
-};
 
 // Create a context for loading state
 const LoadingContext = createContext({
@@ -30,23 +19,6 @@ const LoadingContext = createContext({
 
 // Custom hook for loading context
 export const useLoading = () => useContext(LoadingContext);
-
-// Hook for tracking app state (foreground/background)
-const useAppState = (): AppStateStatus => {
-  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      setAppState(nextAppState);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  return appState;
-};
 
 const App = () => {
   const [serverUrl, setServerUrl] = useState<string>('');
@@ -66,7 +38,6 @@ const App = () => {
       setServerUrl(`${url}`);
       console.log('Server running at:', url);
       setLoading(false);
-
     });
 
     // Stop the server when the component unmounts
@@ -93,10 +64,26 @@ const App = () => {
             },
           }}
         >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: '' }} />
-          <Stack.Screen name="Scratch" component={Scratch} options={{ title: 'Scratch', gestureEnabled: false }} />
-          <Stack.Screen name="VPL3" component={Vpl3} options={{ title: 'VPL3', gestureEnabled: false }} />
-          <Stack.Screen name="Thymio2pConfigurator" component={Thymio2pConfigurator} options={{ title: 'Thymio2+ configuration', gestureEnabled: false }} />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ title: '' }}
+        />
+        <Stack.Screen
+          name="RobotSelect"
+          component={RobotSelect}
+          options={{title: 'Select a robot'}}
+        />
+        <Stack.Screen
+          name="Scratch"
+          component={Scratch}
+          options={{ title: 'Scratch', gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="VPL3"
+          component={VPL3}
+          options={{ title: 'VPL3', gestureEnabled: false }}
+        />
         </Stack.Navigator>
       </NavigationContainer>
     </LoadingContext.Provider>

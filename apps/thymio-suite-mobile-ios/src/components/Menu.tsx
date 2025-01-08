@@ -1,20 +1,19 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
-  Button,
   Dimensions,
-  Touchable,
   TouchableOpacity,
 } from 'react-native';
-import {Sidebar} from './'; // Asegúrate de que la ruta de importación sea correcta
-import MenuIcon from '../../assets/menu-icon';
-import {LanguageSelector, useLanguage} from '../../i18n';
+import {Sidebar} from './Sidebar';
+import MenuIcon from '../assets/menu-icon';
+import {LanguageSelector} from '../i18n';
 
-export const Menu = ({onSelect}: {onSelect: (option: any) => void}) => {
-  const {i18n} = useLanguage();
-
+export const Menu = ({
+  setLoading,
+}: {
+  setLoading: (value: boolean) => void;
+}) => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [selectable, setSelectable] = useState(true);
 
@@ -29,7 +28,11 @@ export const Menu = ({onSelect}: {onSelect: (option: any) => void}) => {
   }, [isSidebarVisible]);
 
   return (
-    <View style={{...styles.container, zIndex: selectable ? 0 : 1}}>
+    <View
+      style={{
+        ...styles.container,
+        zIndex: selectable ? 0 : 1,
+      }}>
       <View
         style={{
           display: 'flex',
@@ -38,8 +41,12 @@ export const Menu = ({onSelect}: {onSelect: (option: any) => void}) => {
           justifyContent: 'flex-end',
           width: Dimensions.get('window').width,
         }}>
-        <LanguageSelector />
-
+        {!isSidebarVisible ? (
+          <LanguageSelector
+            setLoading={setLoading}
+            setShow={(v: boolean) => setSelectable(!v)}
+          />
+        ) : null}
         <TouchableOpacity onPress={() => setSidebarVisible(true)}>
           <View style={styles.menuIconContainer}>
             <MenuIcon />
@@ -49,11 +56,6 @@ export const Menu = ({onSelect}: {onSelect: (option: any) => void}) => {
       <Sidebar
         isVisible={isSidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        onSelect={option => {
-          onSelect(option);
-          console.log('Option selected:', option);
-          setSidebarVisible(false);
-        }}
       />
     </View>
   );
@@ -66,7 +68,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height, // Ajuste para que ocupe toda la altura
+    height: Dimensions.get('window').height + 50, // Ajuste para que ocupe toda la altura
     backgroundColor: '#f7f5f610',
     position: 'absolute',
     top: 0,
@@ -80,17 +82,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     width: 30,
     height: 30,
-    backgroundColor: '#f7f5f610',
+    // backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    // shadowOpacity: 0.25,
+    // shadowRadius: 3.84,
+    // elevation: 5,
     margin: 20,
   },
 });
