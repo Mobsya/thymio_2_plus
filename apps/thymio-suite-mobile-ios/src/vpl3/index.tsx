@@ -29,8 +29,10 @@ import {useLanguage} from '../i18n';
 import DocumentPicker from 'react-native-document-picker';
 import { I18n } from 'i18n-js';
 import Toast from 'react-native-simple-toast';
+import Server from '@dr.pogodin/react-native-static-server';
 
 import LauncherIcon from '../assets/launcher-icon-vpl';
+import { MainBundlePath } from '@dr.pogodin/react-native-fs';
 
 function usePersistentState(key: any, initialValue: any) {
   const {i18n} = useLanguage();
@@ -155,6 +157,25 @@ function App(props: any): JSX.Element {
     disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
     program: [],
   });
+
+  useEffect(() => {
+    const path = `${MainBundlePath}/www`;
+
+    const server = new Server({
+      fileDir: path,
+      port: 3000,
+      stopInBackground: false
+    });
+
+    server.start().then((url:string) => {
+      console.log('Server running at:', url);
+    });
+
+    // Stop the server when the component unmounts
+    return () => {
+      server.stop().then(() => console.log('Server stopped'));
+    };
+  }, []);
 
   const backgroundStyle = {
     backgroundColor: '#201439',

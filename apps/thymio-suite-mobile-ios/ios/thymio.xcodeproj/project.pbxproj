@@ -11,14 +11,14 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		1E2049FA464EBB9A46C9EB3D /* libPods-thymio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 300CF211FF46A42C41347378 /* libPods-thymio.a */; };
+		30F3BEBA224269D33376AAA4 /* libPods-thymio-thymioTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D69A71A1BBEDF6E7EFBA6609 /* libPods-thymio-thymioTests.a */; };
 		3AB9C4A54B4F45C249BC0006 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2FFF15BABD527CE379002CB3 /* PrivacyInfo.xcprivacy */; };
-		807C6B6C0C13A0D768BEBAF0 /* libPods-thymio-thymioTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FD4EBED1C30225205797201E /* libPods-thymio-thymioTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		889573992CA9FE530067F9D3 /* www in Resources */ = {isa = PBXBuildFile; fileRef = 889573982CA9FE530067F9D3 /* www */; };
 		8895739B2CAA0E9E0067F9D3 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8895739A2CAA0E9E0067F9D3 /* Network.framework */; };
 		8895739D2CAA0EAA0067F9D3 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8895739C2CAA0EAA0067F9D3 /* NetworkExtension.framework */; };
 		8895739F2CAA0EB70067F9D3 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8895739E2CAA0EB70067F9D3 /* SystemConfiguration.framework */; };
-		EF3F6C81BB7ACC3D3A331256 /* libPods-thymio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D8ACCBC7B0A873F434BE9AA0 /* libPods-thymio.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +35,7 @@
 		00E356EE1AD99517003FC87E /* thymioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = thymioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* thymioTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = thymioTests.m; sourceTree = "<group>"; };
+		01B12FFC0B8AB88600ECF871 /* Pods-thymio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio.release.xcconfig"; path = "Target Support Files/Pods-thymio/Pods-thymio.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* thymio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = thymio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = thymio/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = thymio/AppDelegate.mm; sourceTree = "<group>"; };
@@ -42,19 +43,18 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = thymio/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = thymio/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = thymio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		2FE1C8C4604003CDD2B2DD0E /* Pods-thymio-thymioTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio-thymioTests.debug.xcconfig"; path = "Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests.debug.xcconfig"; sourceTree = "<group>"; };
 		2FFF15BABD527CE379002CB3 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = thymio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		300CF211FF46A42C41347378 /* libPods-thymio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-thymio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4893EBF1101B18E825783F68 /* Pods-thymio-thymioTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio-thymioTests.debug.xcconfig"; path = "Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = thymio/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		889573982CA9FE530067F9D3 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>"; };
 		8895739A2CAA0E9E0067F9D3 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
 		8895739C2CAA0EAA0067F9D3 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		8895739E2CAA0EB70067F9D3 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		94B2D690C2EC560FEFC18AD7 /* Pods-thymio-thymioTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio-thymioTests.release.xcconfig"; path = "Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests.release.xcconfig"; sourceTree = "<group>"; };
-		970EC073ECFE2ACD6C8DDFA1 /* Pods-thymio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio.debug.xcconfig"; path = "Target Support Files/Pods-thymio/Pods-thymio.debug.xcconfig"; sourceTree = "<group>"; };
-		97BFE185C888348963C086D4 /* Pods-thymio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio.release.xcconfig"; path = "Target Support Files/Pods-thymio/Pods-thymio.release.xcconfig"; sourceTree = "<group>"; };
-		D8ACCBC7B0A873F434BE9AA0 /* libPods-thymio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-thymio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9AD9892EFACE899085036B4 /* Pods-thymio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio.debug.xcconfig"; path = "Target Support Files/Pods-thymio/Pods-thymio.debug.xcconfig"; sourceTree = "<group>"; };
+		D69A71A1BBEDF6E7EFBA6609 /* libPods-thymio-thymioTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-thymio-thymioTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFC81BE55E6FEAD183E10FDC /* Pods-thymio-thymioTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-thymio-thymioTests.release.xcconfig"; path = "Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		FD4EBED1C30225205797201E /* libPods-thymio-thymioTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-thymio-thymioTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				807C6B6C0C13A0D768BEBAF0 /* libPods-thymio-thymioTests.a in Frameworks */,
+				30F3BEBA224269D33376AAA4 /* libPods-thymio-thymioTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,10 +70,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EF3F6C81BB7ACC3D3A331256 /* libPods-thymio.a in Frameworks */,
 				8895739D2CAA0EAA0067F9D3 /* NetworkExtension.framework in Frameworks */,
 				8895739F2CAA0EB70067F9D3 /* SystemConfiguration.framework in Frameworks */,
 				8895739B2CAA0E9E0067F9D3 /* Network.framework in Frameworks */,
+				1E2049FA464EBB9A46C9EB3D /* libPods-thymio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,8 +119,8 @@
 				8895739C2CAA0EAA0067F9D3 /* NetworkExtension.framework */,
 				8895739A2CAA0E9E0067F9D3 /* Network.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				D8ACCBC7B0A873F434BE9AA0 /* libPods-thymio.a */,
-				FD4EBED1C30225205797201E /* libPods-thymio-thymioTests.a */,
+				300CF211FF46A42C41347378 /* libPods-thymio.a */,
+				D69A71A1BBEDF6E7EFBA6609 /* libPods-thymio-thymioTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -160,10 +160,10 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				970EC073ECFE2ACD6C8DDFA1 /* Pods-thymio.debug.xcconfig */,
-				97BFE185C888348963C086D4 /* Pods-thymio.release.xcconfig */,
-				2FE1C8C4604003CDD2B2DD0E /* Pods-thymio-thymioTests.debug.xcconfig */,
-				94B2D690C2EC560FEFC18AD7 /* Pods-thymio-thymioTests.release.xcconfig */,
+				A9AD9892EFACE899085036B4 /* Pods-thymio.debug.xcconfig */,
+				01B12FFC0B8AB88600ECF871 /* Pods-thymio.release.xcconfig */,
+				4893EBF1101B18E825783F68 /* Pods-thymio-thymioTests.debug.xcconfig */,
+				DFC81BE55E6FEAD183E10FDC /* Pods-thymio-thymioTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -175,12 +175,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "thymioTests" */;
 			buildPhases = (
-				E6D4FC4C76D814348C6A4083 /* [CP] Check Pods Manifest.lock */,
+				018E1CAE944464F59048C25C /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
 				00E356EB1AD99517003FC87E /* Frameworks */,
 				00E356EC1AD99517003FC87E /* Resources */,
-				7ED86FDFC0C0D078E90235E0 /* [CP] Embed Pods Frameworks */,
-				613351CC0A7E35009D46C1F0 /* [CP] Copy Pods Resources */,
+				213879B55FE7A88CEC26B8B9 /* [CP] Embed Pods Frameworks */,
+				573839894D85A5576FF04EBA /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -196,13 +196,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "thymio" */;
 			buildPhases = (
-				D4F84F4E608AD2A755579311 /* [CP] Check Pods Manifest.lock */,
+				B2E07DE6EC446387368ABD58 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				5F9BF6436A5EF37124635114 /* [CP] Embed Pods Frameworks */,
-				A1B9505659243EC2612D3266 /* [CP] Copy Pods Resources */,
+				690BFF6DACEC1A0FDF1F66DE /* [CP] Embed Pods Frameworks */,
+				A4DF7D3F9B058675AD2EF86C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -287,41 +287,29 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		5F9BF6436A5EF37124635114 /* [CP] Embed Pods Frameworks */ = {
+		018E1CAE944464F59048C25C /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Embed Pods Frameworks";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-thymio-thymioTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks.sh\"\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		613351CC0A7E35009D46C1F0 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		7ED86FDFC0C0D078E90235E0 /* [CP] Embed Pods Frameworks */ = {
+		213879B55FE7A88CEC26B8B9 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -338,7 +326,41 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A1B9505659243EC2612D3266 /* [CP] Copy Pods Resources */ = {
+		573839894D85A5576FF04EBA /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio-thymioTests/Pods-thymio-thymioTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		690BFF6DACEC1A0FDF1F66DE /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A4DF7D3F9B058675AD2EF86C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -355,7 +377,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-thymio/Pods-thymio-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D4F84F4E608AD2A755579311 /* [CP] Check Pods Manifest.lock */ = {
+		B2E07DE6EC446387368ABD58 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -371,28 +393,6 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-thymio-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E6D4FC4C76D814348C6A4083 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-thymio-thymioTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -432,7 +432,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2FE1C8C4604003CDD2B2DD0E /* Pods-thymio-thymioTests.debug.xcconfig */;
+			baseConfigurationReference = 4893EBF1101B18E825783F68 /* Pods-thymio-thymioTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -459,7 +459,7 @@
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 94B2D690C2EC560FEFC18AD7 /* Pods-thymio-thymioTests.release.xcconfig */;
+			baseConfigurationReference = DFC81BE55E6FEAD183E10FDC /* Pods-thymio-thymioTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
@@ -483,7 +483,7 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 970EC073ECFE2ACD6C8DDFA1 /* Pods-thymio.debug.xcconfig */;
+			baseConfigurationReference = A9AD9892EFACE899085036B4 /* Pods-thymio.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -500,7 +500,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.2.0;
+				MARKETING_VERSION = 3.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -522,7 +522,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 97BFE185C888348963C086D4 /* Pods-thymio.release.xcconfig */;
+			baseConfigurationReference = 01B12FFC0B8AB88600ECF871 /* Pods-thymio.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -538,7 +538,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.2.0;
+				MARKETING_VERSION = 3.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -631,10 +631,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -708,10 +705,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

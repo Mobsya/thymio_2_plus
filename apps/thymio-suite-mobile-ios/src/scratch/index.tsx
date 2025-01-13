@@ -23,6 +23,8 @@ import {useLanguage} from '../i18n';
 import Share from 'react-native-share';
 
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import Server from '@dr.pogodin/react-native-static-server';
+import { MainBundlePath } from '@dr.pogodin/react-native-fs';
 
 function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
@@ -36,6 +38,25 @@ function App(props: any): JSX.Element {
 
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('scratch-program');
+
+  useEffect(() => {
+    const path = `${MainBundlePath}/www`;
+
+    const server = new Server({
+      fileDir: path,
+      port: 3000,
+      stopInBackground: false
+    });
+
+    server.start().then((url:string) => {
+      console.log('Server running at:', url);
+    });
+
+    // Stop the server when the component unmounts
+    return () => {
+      server.stop().then(() => console.log('Server stopped'));
+    };
+  }, []);
 
   const backgroundStyle = {
     backgroundColor: '#201439',

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import StaticServer from 'react-native-static-server'; // Using the given implementation
-import RNFS from 'react-native-fs';
 import HomeScreen from './Home';
 import RobotSelect from './RobotSelect';
 import Scratch from './scratch';
@@ -12,46 +10,18 @@ const Stack = createNativeStackNavigator();
 
 // Create a context for loading state
 const LoadingContext = createContext({
-  loading: true,
+  loading: false,
   setLoading: (loading: boolean) => {},
-  serverUrl: '',
 });
 
 // Custom hook for loading context
 export const useLoading = () => useContext(LoadingContext);
 
 const App = () => {
-  const [serverUrl, setServerUrl] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const path = `${RNFS.MainBundlePath}/www`;
-
-    // for debug
-    RNFS.readDir(path).then((files) => {
-      console.log('Files in www directory: ', JSON.stringify(files.map(({name})=>name), null, 2));
-    });
-
-    const server = new StaticServer(3000, path, { localOnly: true, keepAlive : true });
-
-    server.start().then((url:string) => {
-      setServerUrl(`${url}`);
-      console.log('Server running at:', url);
-      setLoading(false);
-    });
-
-    // Stop the server when the component unmounts
-    return () => {
-      server.stop().then(() => {
-        console.log('Server stopped');
-      }).catch((error) => {
-        console.error('Error stopping server:', error);
-      });
-    };
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   return (
-    <LoadingContext.Provider value={{ loading, setLoading, serverUrl }}>
+    <LoadingContext.Provider value={{ loading, setLoading }}>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
