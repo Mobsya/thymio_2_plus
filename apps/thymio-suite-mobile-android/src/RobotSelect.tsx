@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, Image, Linking, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, Image, Linking, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { ConnectedRobot, RobotService } from "./services/RobotService";
 import { RobotButton } from "./components/RobotButton";
 import { NodeStatus } from "@mobsya-association/thymio-api/dist/thymio_generated/mobsya/fb";
@@ -107,6 +107,7 @@ function RobotSelect(props: any): JSX.Element {
               <Text>{"\n"}</Text>
               <Text style={{color: 'white'}}>
                 {i18n.t('description_materials')}
+                {" "}
                 <Text
                   style={{color: 'lightblue'}}
                   onPress={() => Linking.openURL('https://www.thymio.org')}>
@@ -121,9 +122,9 @@ function RobotSelect(props: any): JSX.Element {
             <ActivityIndicator size='large' />
             <Text style={styles.title}>{i18n.t('searching_robots')}</Text>
           </View>
-          <View style={styles.robotList}>
+          <ScrollView contentContainerStyle={styles.robotList}>
             {robotButtonList}
-          </View>
+          </ScrollView>
         </View>
       </View>
     </SafeAreaView>
