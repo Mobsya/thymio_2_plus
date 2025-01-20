@@ -27,6 +27,7 @@ export const it = {
   vpl3_program_save: 'Salva questo programma',
   vpl3_program_load: 'Caricare un programma',
   vpl3_program_new: 'Nuovo programma',
+  vpl3_can_only_read_vpl_files: 'Può leggere soltanto i file VPL3',
   scratch_description_title: 'Utilizzando Thymio e Scratch, è possibile creare interazioni tra il mondo reale e lo schermo utilizzando le scene e gli sprite di Scratch.',
   scratch_description_bullet_1: 'Creare storie interattive o persino giochi controllati da Thymio',
   scratch_description_bullet_2: 'Programmare Thymio e Scratch utilizzando un\'interfaccia drag-and-drop',

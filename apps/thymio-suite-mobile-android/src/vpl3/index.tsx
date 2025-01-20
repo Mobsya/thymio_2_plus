@@ -12,26 +12,26 @@ import {
   PermissionsAndroid,
   Text,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
-import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 
 import {getQueryParams} from '../helpers/parsers';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {i18n, useLanguage} from '../i18n';
 
-import DocumentPicker from 'react-native-document-picker';
 import LauncherIcon from '../assets/launcher-icon-vpl';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import webview from '../components/webview';
 import { I18n } from 'i18n-js';
 import Toast from 'react-native-simple-toast';
+import { DocumentDirectoryPath, DownloadDirectoryPath, exists, pickFile, readFile, writeFile } from '@dr.pogodin/react-native-fs';
 
 function usePersistentState(key: any, initialValue: any) {
   const {i18n} = useLanguage();
@@ -143,6 +143,7 @@ const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
 };
 
 function App(props: any): JSX.Element {
+  const navigation = useNavigation();
   const {language, i18n} = useLanguage();
 
   const { name, uuid, address, port } = props.route.params;
@@ -186,18 +187,16 @@ function App(props: any): JSX.Element {
   const loadJsonFile = async () => {
     try {
       // Abrir el selector de documentos para archivos JSON
-      const results = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-      });
+      const results = await pickFile({pickerType: 'singleFile'});
 
       const res = results[0];
 
-      console.log('URI:', res.uri);
-      console.log('Tipo:', res.type);
-      console.log('Nombre del archivo:', res.name);
-      console.log('Tamaño:', res.size);
+      const fileExtension = res.split('.').pop();
+      if(fileExtension !== 'vpl3') {
+        throw new Error(i18n.t('vpl3_can_only_read_vpl_files'));
+      }
 
-      const file = await ReactNativeBlobUtil.fs.readFile(res.uri, 'utf8');
+      const file = await readFile(res, 'utf8');
 
       console.log('File:', file);
 
@@ -209,12 +208,8 @@ function App(props: any): JSX.Element {
         JSON.stringify({action: 'setProgram', program: file}),
       );
     } catch (err: unknown) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('File selection cancelled');
-      } else {
-        console.log('Error selecting file:', err);
-        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
-      }
+      console.log('Error selecting file:', err);
+      Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 
@@ -238,9 +233,15 @@ function App(props: any): JSX.Element {
   ) => {
     try {
       console.log('JSON', jsonData);
-      console.log('The document directory is: ', ReactNativeBlobUtil.fs.dirs);
 
-      const documentDir = ReactNativeBlobUtil.fs.dirs.LegacyDownloadDir;
+      let documentDir;
+      if(Platform.OS === 'android') {
+        documentDir = DownloadDirectoryPath;
+      } else {
+        documentDir = DocumentDirectoryPath;
+      }
+
+      console.log('The document directory is: ', documentDir);
       if (!documentDir) {
         console.error('The document directory is not available');
         return;
@@ -249,7 +250,11 @@ function App(props: any): JSX.Element {
       const path = `${documentDir}/${filename}`;
       console.log('THE path is', path)
 
-      await ReactNativeBlobUtil.fs.writeFile(path, jsonData, 'utf8');
+      if (await exists(path)) {
+        throw new Error(i18n.t('file_exist'));
+      }
+
+      await writeFile(path, jsonData, 'utf8');
       console.log('The file saved successfully in path:', path);
 
       if (quit) {
@@ -257,7 +262,7 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('scratch_save_continue'),
             onPress: () => {
-              props.navigation.dispatch(CommonActions.goBack());
+              navigation.dispatch(CommonActions.goBack());
             },
           },
         ]);
@@ -333,7 +338,7 @@ function App(props: any): JSX.Element {
   const [quit, setQuit] = useState(false);
 
   useEffect(() => {
-    props.navigation.setOptions({
+    navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
           <LauncherIcon />
@@ -342,7 +347,7 @@ function App(props: any): JSX.Element {
       ),
       headerLeft: () => (
         <View>
-          <TouchableOpacity onPress={() => onBackPress(webViewRef, i18n)}>
+          <TouchableOpacity onPressOut={() => onBackPress(webViewRef, i18n)}>
             <BackIcon />
           </TouchableOpacity>
         </View>
@@ -350,7 +355,7 @@ function App(props: any): JSX.Element {
       headerRight: () => (
         <View style={styles.titleContainer}>
           <TouchableOpacity
-            onPress={() =>
+            onPressOut={() =>
               Linking.openURL(
                 'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-en-vpl3/',
               )
@@ -386,7 +391,7 @@ function App(props: any): JSX.Element {
       });
     } else if (objectData.spec === 'toQuit' || objectData.saved) {
       asyncSetConfig(JSON.parse(objectData.saved), () => {
-        props.navigation.dispatch(CommonActions.goBack());
+        navigation.dispatch(CommonActions.goBack());
       });
     } else {
       Alert.alert(

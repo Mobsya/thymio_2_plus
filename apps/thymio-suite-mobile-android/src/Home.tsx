@@ -11,10 +11,7 @@ import {
 } from 'react-native';
 import Logo from './assets/logo-thymio';
 import {useLanguage} from './i18n';
-import DeviceInfo from 'react-native-device-info';
 import { Menu } from './components/Menu';
-
-const isTablet = DeviceInfo.isTablet();
 
 function App({navigation}: any): JSX.Element {
   const {language, i18n} = useLanguage();
@@ -66,7 +63,7 @@ function App({navigation}: any): JSX.Element {
       </View>
       <View
         style={
-          isTablet ? styles.AppsContainerTablet : styles.AppsContainerMobile
+          styles.AppsContainerTablet
         }>
         {[
           {
@@ -83,7 +80,7 @@ function App({navigation}: any): JSX.Element {
             onPress={() => navigation.navigate('RobotSelect', { programmingEnv: name })}>
             <View style={{...styles.Apps}}>
               <Image
-                style={isTablet ? styles.stretchTablet : styles.stretchMobile}
+                style={styles.stretchTablet}
                 source={logo}
               />
             </View>
@@ -91,7 +88,7 @@ function App({navigation}: any): JSX.Element {
         ))}
       </View>
 
-      <Text style={styles.versionString}>v3.3.0</Text>
+      <Text style={styles.versionString}>v3.4.0</Text>
     </View>
   );
 }

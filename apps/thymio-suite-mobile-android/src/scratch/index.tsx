@@ -13,7 +13,6 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
@@ -21,13 +20,15 @@ import {WebView, WebViewNavigation} from 'react-native-webview';
 import LauncherIcon from '../assets/launcher-icon-scratch';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import Toast from 'react-native-simple-toast';
 
 import {useLanguage} from '../i18n';
+import { DocumentDirectoryPath, DownloadDirectoryPath, exists, writeFile } from '@dr.pogodin/react-native-fs';
 
 
 function App(props: any): JSX.Element {
+  const navigation = useNavigation();
   const {i18n} = useLanguage();
 
   const { uuid, name, address, port } = props.route.params;
@@ -57,7 +58,7 @@ function App(props: any): JSX.Element {
         {
           text: i18n.t('scratch_quit'),
           onPress: () => {
-            props.navigation.dispatch(CommonActions.goBack());
+            navigation.dispatch(CommonActions.goBack());
           },
         },
       ],
@@ -79,7 +80,13 @@ function App(props: any): JSX.Element {
 
   const saveJsonFile = async (base64data: string | null, filename: string) => {
     try {
-      const documentDir = ReactNativeBlobUtil.fs.dirs.LegacyDownloadDir;
+      let documentDir;
+      if (Platform.OS === 'android') {
+        documentDir = DownloadDirectoryPath;
+      } else {
+        documentDir = DocumentDirectoryPath;
+      }
+
       if (!documentDir) {
         console.error('The document directory is not available');
         return;
@@ -92,13 +99,13 @@ function App(props: any): JSX.Element {
 
       const base64 = base64data.split('base64,')[1];
       let path = `${documentDir}/${filename}`;
-      let fileExists = await ReactNativeBlobUtil.fs.exists(path);
+      let fileExists = await exists(path);
       let index = 0;
 
       while (fileExists) {
         index++;
         const newPath = `${documentDir}/${filename.split('.').slice(0, -1).join('.') + '(' + index + ')' + '.' + filename.split('.').pop()}`;
-        fileExists = await ReactNativeBlobUtil.fs.exists(newPath);
+        fileExists = await exists(newPath);
         if (!fileExists) {
           Alert.alert(
             i18n.t('file_exist'),
@@ -114,7 +121,7 @@ function App(props: any): JSX.Element {
               {
                 text: 'OK',
                 onPress: async () => {
-                  await ReactNativeBlobUtil.fs.createFile(
+                  await writeFile(
                     newPath,
                     base64,
                     'base64',
@@ -143,7 +150,8 @@ function App(props: any): JSX.Element {
         }
       }
 
-      await ReactNativeBlobUtil.fs.createFile(path, base64, 'base64');
+      await writeFile(path, base64, 'base64');
+
       Alert.alert(
         i18n.t('scratch_save_success'),
         i18n.t('scratch_save_options'),
@@ -162,7 +170,7 @@ function App(props: any): JSX.Element {
   };
 
   useEffect(() => {
-    props.navigation.setOptions({
+    navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
           <LauncherIcon />
@@ -173,7 +181,7 @@ function App(props: any): JSX.Element {
       ),
       headerLeft: () => (
         <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
+          <TouchableOpacity onPressOut={() => onBackPress()}>
             <BackIcon />
           </TouchableOpacity>
         </View>
@@ -181,7 +189,7 @@ function App(props: any): JSX.Element {
       headerRight: () => (
         <View style={styles.titleContainer}>
           <TouchableOpacity
-            onPress={() =>
+            onPressOut={() =>
               Linking.openURL(
                 'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-avec-scratch/',
               )

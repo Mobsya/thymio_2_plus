@@ -13,11 +13,8 @@ import Logo from './assets/logo-thymio';
 import ThymioLeftSide from './assets/thymio-left-side';
 import {Menu} from './components/Menu';
 import {LanguageSelector, useLanguage} from './i18n';
-import DeviceInfo from 'react-native-device-info';
 import FullScreenModal from './components/Modal';
 import Policy from './components/Policy';
-
-const isTablet = DeviceInfo.isTablet();
 
 type ClickableLinkTextProps = {
   normalText: string;
@@ -35,7 +32,7 @@ const ClickableLinkText = ({
 
   return (
     <Text
-      style={{...stylesClickableLinkText.text, fontSize: isTablet ? 16 : 12}}>
+      style={{...stylesClickableLinkText.text, fontSize: 16}}>
       {fisrt}
       <Text style={stylesClickableLinkText.link} onPress={onPressLink}>
         {linkText}
@@ -78,15 +75,9 @@ const WelcomeScreen = ({setFirstUse, setLoading}: any) => {
         <LanguageSelector setLoading={setLoading} />
       </View>
       <View style={styles.middle}>
-        {isTablet ? (
-          <Text style={styles.welcome}>
-            {i18n.t('welcome_to_tyhmioSuiteTablet')}
-          </Text>
-        ) : (
-          <Text style={styles.welcome}>
-            {i18n.t('welcome_to_tyhmioSuitePhone')}
-          </Text>
-        )}
+        <Text style={styles.welcome}>
+          {i18n.t('welcome_to_tyhmioSuiteTablet')}
+        </Text>
 
         <ThymioLeftSide />
 
@@ -119,7 +110,7 @@ const WelcomeScreen = ({setFirstUse, setLoading}: any) => {
             <Text
               style={{
                 ...styles.textContinuerButton,
-                fontSize: isTablet ? 16 : 14,
+                fontSize: 16,
               }}>
               {i18n.t('welcome_continue')}
             </Text>

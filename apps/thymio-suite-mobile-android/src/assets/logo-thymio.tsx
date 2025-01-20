@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {SvgXml} from 'react-native-svg';
-import DeviceInfo from 'react-native-device-info';
 
 const xml = `
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -201,16 +200,5 @@ const xml = `
 </svg>
 `;
 
-const isTablet = DeviceInfo.isTablet();
-
 export default () =>
-  isTablet ? (
-    <SvgXml xml={xml} width={205} height={73} />
-  ) : (
-    <SvgXml
-      xml={xml}
-      width={180}
-      height={63}
-      style={{transform: 'scale(0.6)'}}
-    />
-  );
+    <SvgXml xml={xml} width={205} height={73} />;
