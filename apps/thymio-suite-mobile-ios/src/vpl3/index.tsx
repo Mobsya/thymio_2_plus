@@ -497,7 +497,9 @@ function App(props: any): JSX.Element {
         backgroundColor={backgroundStyle.backgroundColor}
       />
       <View style={{marginTop: 22}}>
-        <Dialog.Container visible={dialogVisible !== null}>
+        <Dialog.Container
+          visible={dialogVisible !== null}
+          supportedOrientations={['landscape']}>
           <Dialog.Title>{i18n.t('scratch_saveForm_title')}</Dialog.Title>
           <Dialog.Description>
             {i18n.t('scratch_saveForm_info')}
