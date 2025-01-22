@@ -4049,9 +4049,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.5.73:
-  version "1.5.83"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.83.tgz#3f74078f0c83e24bf7e692eaa855a998d1bec34f"
-  integrity sha512-LcUDPqSt+V0QmI47XLzZrz5OqILSMGsPFkDYus22rIbgorSvBYEFqq854ltTmUdHkY92FSdAAvsh4jWEULMdfQ==
+  version "1.5.84"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.84.tgz#8e334ca206bb293a20b16418bf454783365b0a95"
+  integrity sha512-I+DQ8xgafao9Ha6y0qjHHvpZ9OfyA1qKlkHkjywxzniORU2awxyz7f/iVJcULmrF2yrM3nHQf+iDjJtbbexd/g==
 
 emittery@^0.13.1:
   version "0.13.1"
@@ -7062,6 +7062,13 @@ react-native-dialog@^9.3.0:
   resolved "https://registry.yarnpkg.com/react-native-dialog/-/react-native-dialog-9.3.0.tgz#9d745cc51653a1e2ae08076b46f11d99723c47f6"
   integrity sha512-JEOJY/0AzTM9grIl0BL8o/IJPIJru7k5MPj9POTE9RRezUEtgn0YSvCpTlBtG0obWgOdzg2otMz1OQvMXS0wMQ==
 
+react-native-document-picker@^9.3.1:
+  version "9.3.1"
+  resolved "https://registry.yarnpkg.com/react-native-document-picker/-/react-native-document-picker-9.3.1.tgz#f2c33237a906fd0893130e0605c8f18a3aef1605"
+  integrity sha512-Vcofv9wfB0j67zawFjfq9WQPMMzXxOZL9kBmvWDpjVuEcVK73ndRmlXHlkeFl5ZHVsv4Zb6oZYhqm9u5omJOPA==
+  dependencies:
+    invariant "^2.2.4"
+
 react-native-localize@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-3.4.1.tgz#df07c13231b4e8cc949e68513b124105f861229c"
@@ -7073,9 +7080,9 @@ react-native-orientation-locker@^1.7.0:
   integrity sha512-2PhG4UyRJktb3KCTISStuu8/q+Q3q3oPesGg9DhdY0b6Cu/ZzxkCvkbJte2TPWRYkS0JpClimvqVaonulGvDrA==
 
 react-native-permissions@^5.2.2:
-  version "5.2.3"
-  resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-5.2.3.tgz#7006519015df361a15420fba9b1ab1b70b323090"
-  integrity sha512-HGcMxGkfPUhhnWnQRkeihqiUdF5FrXVYbvwduyzeqsDLDfEJcQqVF6vPvNkVx74XhN5XgrcjPQh1RV8Owf9hhg==
+  version "5.2.4"
+  resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-5.2.4.tgz#e36e2ae67bc09c56d18bec1e11c833353256ebe2"
+  integrity sha512-WmFY3mDBwj0eO93ziEi8r+6uuZo6XrcEIdQ66AfzC8CeNXXclDwypTnewBj51K0mn4QVRJxM6PSgIlj0ii5qig==
 
 react-native-restart@^0.0.27:
   version "0.0.27"

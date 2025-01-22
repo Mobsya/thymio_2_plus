@@ -29,9 +29,10 @@ import LauncherIcon from '../assets/launcher-icon-vpl';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
 import webview from '../components/webview';
+import DocumentPicker from 'react-native-document-picker';
 import { I18n } from 'i18n-js';
 import Toast from 'react-native-simple-toast';
-import { DocumentDirectoryPath, DownloadDirectoryPath, exists, pickFile, readFile, writeFile } from '@dr.pogodin/react-native-fs';
+import { copyFile, DocumentDirectoryPath, DownloadDirectoryPath, exists, readFile, TemporaryDirectoryPath, writeFile } from '@dr.pogodin/react-native-fs';
 
 function usePersistentState(key: any, initialValue: any) {
   const {i18n} = useLanguage();
@@ -97,7 +98,7 @@ async function requestStoragePermission(callback: () => void) {
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       callback();
     } else {
-      Toast.showWithGravity(i18n.t('could_not_open_file'), Toast.LONG, Toast.BOTTOM);
+      Toast.showWithGravity(i18n.t('storage_permission_description'), Toast.LONG, Toast.BOTTOM);
     }
   } catch (err) {
     console.warn(err);
@@ -184,19 +185,35 @@ function App(props: any): JSX.Element {
     backgroundColor: '#201439',
   };
 
-  const loadJsonFile = async () => {
+  const loadFile = async () => {
     try {
       // Abrir el selector de documentos para archivos JSON
-      const results = await pickFile({pickerType: 'singleFile'});
+      const results = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
 
       const res = results[0];
 
-      const fileExtension = res.split('.').pop();
+      if (res.name === null) {
+        throw new Error('File could not be loaded')
+      }
+
+      const fileExtension = res.name.split('.').pop();
       if(fileExtension !== 'vpl3') {
         throw new Error(i18n.t('vpl3_can_only_read_vpl_files'));
       }
 
-      const file = await readFile(res, 'utf8');
+      let filePath: string;
+      if(Platform.OS === 'ios') {
+        let arr = res.uri.split('/');
+        filePath = `${DocumentDirectoryPath}/${arr[arr.length - 1]}`;
+      } else {
+        const destPath = `${TemporaryDirectoryPath}/${res.name}`;
+        await copyFile(res.uri, destPath);
+        filePath = `file://${destPath}`;
+      }
+
+      const file = await readFile(filePath, 'utf8');
 
       console.log('File:', file);
 
@@ -208,8 +225,12 @@ function App(props: any): JSX.Element {
         JSON.stringify({action: 'setProgram', program: file}),
       );
     } catch (err: unknown) {
-      console.log('Error selecting file:', err);
-      Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
+      if (DocumentPicker.isCancel(err)) {
+        console.log('File selection cancelled');
+      } else {
+        console.log('Error selecting file:', err);
+        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
+      }
     }
   };
 
@@ -226,7 +247,7 @@ function App(props: any): JSX.Element {
     }
   };
 
-  const saveJsonFile = async (
+  const saveFile = async (
     jsonData: string,
     filename: string,
     quit: boolean,
@@ -235,10 +256,10 @@ function App(props: any): JSX.Element {
       console.log('JSON', jsonData);
 
       let documentDir;
-      if(Platform.OS === 'android') {
-        documentDir = DownloadDirectoryPath;
-      } else {
+      if(Platform.OS === 'ios') {
         documentDir = DocumentDirectoryPath;
+      } else {
+        documentDir = DownloadDirectoryPath;
       }
 
       console.log('The document directory is: ', documentDir);
@@ -248,7 +269,6 @@ function App(props: any): JSX.Element {
       }
 
       const path = `${documentDir}/${filename}`;
-      console.log('THE path is', path)
 
       if (await exists(path)) {
         throw new Error(i18n.t('file_exist'));
@@ -417,7 +437,7 @@ function App(props: any): JSX.Element {
             style: 'destructive',
             onPress: () => {
               requestStoragePermission(() => {
-                loadJsonFile();
+                loadFile();
               });
             },
           },
@@ -450,8 +470,10 @@ function App(props: any): JSX.Element {
   );
 
   const handleSave = () => {
-    saveJsonFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
-    setDialogVisible(null);
+    requestStoragePermission(() => {
+      saveFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
+      setDialogVisible(null);
+    });
   };
 
   const openURL = (_url: string) => {

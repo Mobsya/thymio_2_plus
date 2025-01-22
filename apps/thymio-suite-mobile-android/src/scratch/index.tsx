@@ -78,13 +78,13 @@ function App(props: any): JSX.Element {
     }
   };
 
-  const saveJsonFile = async (base64data: string | null, filename: string) => {
+  const saveFile = async (base64Data: string | null, filename: string) => {
     try {
       let documentDir;
-      if (Platform.OS === 'android') {
-        documentDir = DownloadDirectoryPath;
-      } else {
+      if (Platform.OS === 'ios') {
         documentDir = DocumentDirectoryPath;
+      } else {
+        documentDir = DownloadDirectoryPath;
       }
 
       if (!documentDir) {
@@ -92,12 +92,12 @@ function App(props: any): JSX.Element {
         return;
       }
 
-      if (!base64data) {
+      if (!base64Data) {
         console.error('No data to save');
         return;
       }
 
-      const base64 = base64data.split('base64,')[1];
+      const base64 = base64Data.split('base64,')[1];
       let path = `${documentDir}/${filename}`;
       let fileExists = await exists(path);
       let index = 0;
@@ -114,7 +114,7 @@ function App(props: any): JSX.Element {
               {
                 text: 'No',
                 onPress: () => {
-                  setDialogVisible(base64data);
+                  setDialogVisible(base64Data);
                 },
                 style: 'cancel',
               },
@@ -237,7 +237,7 @@ function App(props: any): JSX.Element {
   };
 
   const handleSave = () => {
-    saveJsonFile(dialogVisible, fileName + '.sb3');
+    saveFile(dialogVisible, fileName + '.sb3');
     setDialogVisible(null);
   };
 
