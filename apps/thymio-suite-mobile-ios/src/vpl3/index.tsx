@@ -12,14 +12,13 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 
 import {getPathAfterLocalhost} from '../helpers/parsers';
 
@@ -32,7 +31,7 @@ import Toast from 'react-native-simple-toast';
 import Server from '@dr.pogodin/react-native-static-server';
 
 import LauncherIcon from '../assets/launcher-icon-vpl';
-import { MainBundlePath } from '@dr.pogodin/react-native-fs';
+import { copyFile, DocumentDirectoryPath, DownloadDirectoryPath, exists, MainBundlePath, readFile, TemporaryDirectoryPath, writeFile } from '@dr.pogodin/react-native-fs';
 
 function usePersistentState(key: any, initialValue: any) {
   const {i18n} = useLanguage();
@@ -123,6 +122,7 @@ const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
 };
 
 function App(props: any): JSX.Element {
+  const navigation = useNavigation();
   const {language, i18n} = useLanguage();
 
   const { name, uuid, address, port } = props.route.params;
@@ -181,37 +181,46 @@ function App(props: any): JSX.Element {
     backgroundColor: '#201439',
   };
 
-  const loadJsonFile = async () => {
+  const loadFile = async () => {
     try {
-      // Abrir el selector de documentos para archivos JSON
       const results = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
 
       const res = results[0];
-      console.log("RESULT", res)
 
-      console.log('URI:', res.uri);
-      console.log('Tipo:', res.type);
-      console.log('Nombre del archivo:', res.name);
-      console.log('Tamaño:', res.size);
+      if (res.name === null) {
+        throw new Error('File could not be loaded')
+      }
+
+      const fileExtension = res.name.split('.').pop();
+      if(fileExtension !== 'vpl3') {
+        throw new Error(i18n.t('vpl3_can_only_read_vpl_files'));
+      }
 
       let filePath: string;
       if(Platform.OS === 'ios') {
         let arr = res.uri.split('/');
-        const dirs = ReactNativeBlobUtil.fs.dirs;
-        filePath = `${dirs.DocumentDir}/${arr[arr.length - 1]}`;
+        filePath = `${DocumentDirectoryPath}/${arr[arr.length - 1]}`;
       } else {
-        filePath = res.uri;
+        const destPath = `${TemporaryDirectoryPath}/${res.name}`;
+        await copyFile(res.uri, destPath);
+        filePath = `file://${destPath}`;
       }
 
-      // read file from uri
-      const file = await ReactNativeBlobUtil.fs.readFile(
-        filePath,
-        'utf8',
-      );
+      const file = await readFile(filePath, 'utf8');
+
+      console.log('File:', file);
 
       setConfig(JSON.parse(file));
+
+      console.log('Programa cargado');
+
+      /*
+      webViewRef.current.postMessage(
+        JSON.stringify({action: 'setProgram', program: file}),
+      );
+      */
       webViewRef.current.reload();
     } catch (err: unknown) {
       if (DocumentPicker.isCancel(err)) {
@@ -241,22 +250,31 @@ function App(props: any): JSX.Element {
     quit: boolean,
   ) => {
     try {
-      // Verifica que dirs y DocumentDirectoryPath están correctamente definidos
-      console.log('The document directory is: ', ReactNativeBlobUtil.fs.dirs);
+      console.log('JSON', jsonData);
 
-      const documentDir = ReactNativeBlobUtil.fs.dirs.DocumentDir;
+      let documentDir;
+      if(Platform.OS === 'ios') {
+        documentDir = DocumentDirectoryPath;
+      } else {
+        documentDir = DownloadDirectoryPath;
+      }
+
+      console.log('The document directory is: ', documentDir);
       if (!documentDir) {
         console.error('The document directory is not available');
         return;
       }
 
       const path = `${documentDir}/${filename}`;
+      console.log('THE path is', path)
 
-      // Asegúrate de que jsonData sea un string JSON válido, no es necesario
-      // eliminar ningún prefijo de datos como en el caso de base64
+      /*
+      if (await exists(path)) {
+        throw new Error(i18n.t('file_exist'));
+      }
+        */
 
-      // Guardar el string JSON en el archivo
-      await ReactNativeBlobUtil.fs.writeFile(path, jsonData, 'utf8');
+      await writeFile(path, jsonData, 'utf8');
       console.log('The file saved successfully in path:', path);
 
       if (quit) {
@@ -264,7 +282,7 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('scratch_save_continue'),
             onPress: () => {
-              props.navigation.dispatch(CommonActions.goBack());
+              navigation.dispatch(CommonActions.goBack());
             },
           },
         ]);
@@ -272,7 +290,6 @@ function App(props: any): JSX.Element {
         return path;
       }
 
-      // Mostrar una alerta indicando éxito y opciones posteriores
       Alert.alert(
         i18n.t('scratch_save_success'),
         i18n.t('scratch_save_options'),
@@ -290,7 +307,7 @@ function App(props: any): JSX.Element {
   };
 
   useEffect(() => {
-    props.navigation.setOptions({
+    navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
           <LauncherIcon />
@@ -334,6 +351,8 @@ function App(props: any): JSX.Element {
           if (data.action === 'getProgram') {
             const programJSON = window.vplGetProgramAsJSON();
             window.ReactNativeWebView.postMessage(JSON.stringify({ saved: programJSON, spec: data.spec }));
+          } else if (data.action === 'setProgram') {
+            window.vplApp.loadProgramFile(JSON.parse(data.program));
           }
         } catch(e) {
           console.error('Error procesando el mensaje:', e);
@@ -395,7 +414,7 @@ function App(props: any): JSX.Element {
       });
     } else if (objectData.spec === 'toQuit' || objectData.saved) {
       asyncSetConfig(JSON.parse(objectData.saved), () => {
-        props.navigation.dispatch(CommonActions.goBack());
+        navigation.dispatch(CommonActions.goBack());
       });
     } else {
       Alert.alert(
@@ -419,7 +438,7 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('vpl3_program_load'),
             onPress: () => {
-              loadJsonFile();
+              loadFile();
             },
           },
           {

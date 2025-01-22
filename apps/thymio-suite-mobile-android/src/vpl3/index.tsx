@@ -187,7 +187,6 @@ function App(props: any): JSX.Element {
 
   const loadFile = async () => {
     try {
-      // Abrir el selector de documentos para archivos JSON
       const results = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
@@ -233,7 +232,6 @@ function App(props: any): JSX.Element {
       }
     }
   };
-
 
   const shareFile = async (filePath: any) => {
     console.log(`Intentando compartir archivo: ${filePath}`);

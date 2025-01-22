@@ -10,23 +10,25 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Platform,
 } from 'react-native';
 import Dialog from 'react-native-dialog';
 import {WebView, WebViewNavigation} from 'react-native-webview';
 import LauncherIcon from '../assets/launcher-icon-scratch';
 import BackIcon from '../assets/back-icon';
 import HelpIcon from '../assets/launcher-icon-help-blue';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 
 import {useLanguage} from '../i18n';
 
 import Share from 'react-native-share';
 
-import ReactNativeBlobUtil from 'react-native-blob-util';
 import Server from '@dr.pogodin/react-native-static-server';
-import { MainBundlePath } from '@dr.pogodin/react-native-fs';
+import { DocumentDirectoryPath, DownloadDirectoryPath, exists, MainBundlePath, writeFile } from '@dr.pogodin/react-native-fs';
+import Toast from 'react-native-simple-toast';
 
 function App(props: any): JSX.Element {
+  const navigation = useNavigation();
   const {language, i18n} = useLanguage();
 
   const { uuid, name, address, port } = props.route.params;
@@ -69,7 +71,7 @@ function App(props: any): JSX.Element {
   const handleSave = () => {
     setDialogVisible(null);
     if (dialogVisible) {
-      saveBase64File(dialogVisible, fileName + '.sb3');
+      saveFile(dialogVisible, fileName + '.sb3');
     }
   };
 
@@ -85,38 +87,95 @@ function App(props: any): JSX.Element {
     }
   };
 
-  const saveBase64File = async (base64Data: string, filename: string) => {
+  const saveFile = async (base64Data: string | null, filename: string) => {
     try {
-      // Verifica que dirs y DocumentDirectoryPath están correctamente definidos
-      console.log('The document directory is: ', ReactNativeBlobUtil.fs.dirs);
+      let documentDir;
+      if (Platform.OS === 'ios') {
+        documentDir = DocumentDirectoryPath;
+      } else {
+        documentDir = DownloadDirectoryPath;
+      }
 
-      const documentDir = ReactNativeBlobUtil.fs.dirs.DocumentDir;
       if (!documentDir) {
-        console.error('the document directory is not available');
+        console.error('The document directory is not available');
         return;
       }
 
-      const path = `${documentDir}/${filename}`;
-
-      // Asegúrate de que base64Data no incluya el prefijo de datos; si es así, elimínalo.
-      if (base64Data.startsWith('data:')) {
-        base64Data = base64Data.split(',')[1];
+      if (!base64Data) {
+        console.error('No data to save');
+        return;
       }
 
-      await ReactNativeBlobUtil.fs.writeFile(path, base64Data, 'base64');
-      console.log('The file saved successfully in path:', path);
+      const base64 = base64Data.split('base64,')[1];
+      let path = `${documentDir}/${filename}`;
+      let fileExists = await exists(path);
+      let index = 0;
+
+      while (fileExists) {
+        index++;
+        const newPath = `${documentDir}/${filename.split('.').slice(0, -1).join('.') + '(' + index + ')' + '.' + filename.split('.').pop()}`;
+        fileExists = await exists(newPath);
+        if (!fileExists) {
+          Alert.alert(
+            i18n.t('file_exist'),
+            i18n.t('file_exist_message', {name: filename}),
+            [
+              {
+                text: 'No',
+                onPress: () => {
+                  setDialogVisible(base64Data);
+                },
+                style: 'cancel',
+              },
+              {
+                text: 'OK',
+                onPress: async () => {
+                  await writeFile(
+                    newPath,
+                    base64,
+                    'base64',
+                  );
+
+                  Alert.alert(
+                    i18n.t('scratch_save_success'),
+                    i18n.t('scratch_save_options'),
+                    [
+                      {
+                        text: i18n.t('scratch_save_continue'),
+                        onPress: () => {},
+                      },
+                      {
+                        text: i18n.t('scratch_save_share'),
+                        onPress: () => shareFile(newPath),
+                      },
+                    ],
+                  );
+                },
+              },
+            ],
+            {cancelable: false},
+          );
+          return;
+        }
+      }
+
+      await writeFile(path, base64, 'base64');
 
       Alert.alert(
         i18n.t('scratch_save_success'),
         i18n.t('scratch_save_options'),
         [
           {text: i18n.t('scratch_save_continue'), onPress: () => {}},
-          {text: i18n.t('scratch_save_share'), onPress: () => shareFile(path)},
+          {
+            text: i18n.t('scratch_save_share'),
+            onPress: () => shareFile(path),
+          },
         ],
       );
-
-      return path;
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error saving the JSON file:', error);
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
+    }
   };
 
   const onBackPress = () => {
@@ -133,7 +192,7 @@ function App(props: any): JSX.Element {
         {
           text: i18n.t('scratch_quit'),
           onPress: () => {
-            props.navigation.dispatch(CommonActions.goBack())
+            navigation.dispatch(CommonActions.goBack())
           }
         },
       ],
@@ -142,7 +201,7 @@ function App(props: any): JSX.Element {
   };
 
   useEffect(() => {
-    props.navigation.setOptions({
+    navigation.setOptions({
       headerTitle: () => (
         <View style={styles.titleContainer}>
           <LauncherIcon />
