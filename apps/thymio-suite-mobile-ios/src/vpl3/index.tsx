@@ -1,4 +1,11 @@
-import React, {MutableRefObject, useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -26,160 +33,159 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useLanguage} from '../i18n';
 
 import DocumentPicker from 'react-native-document-picker';
-import { I18n } from 'i18n-js';
+import {I18n} from 'i18n-js';
 import Toast from 'react-native-simple-toast';
 import Server from '@dr.pogodin/react-native-static-server';
 
 import LauncherIcon from '../assets/launcher-icon-vpl';
-import { copyFile, DocumentDirectoryPath, DownloadDirectoryPath, exists, MainBundlePath, readFile, TemporaryDirectoryPath, writeFile } from '@dr.pogodin/react-native-fs';
+import {
+  copyFile,
+  DocumentDirectoryPath,
+  DownloadDirectoryPath,
+  MainBundlePath,
+  readFile,
+  TemporaryDirectoryPath,
+  writeFile,
+} from '@dr.pogodin/react-native-fs';
 
-function usePersistentState(key: any, initialValue: any) {
-  const {i18n} = useLanguage();
+type VPLState = {
+  basicBlocks: string[];
+  basicMultiEvent: boolean;
+  disabledUI: string[];
+  program: any[];
+};
 
-  const [state, setState] = useState(initialValue);
+type WebViewMessage = {
+  state: string;
+  spec: string;
+  error?: string;
+};
 
-  // Cargar el estado guardado al inicializar
-  useEffect(() => {
-    const loadStoredState = async () => {
-      try {
-        const storedState = await AsyncStorage.getItem(key);
-
-        if (storedState !== null) {
-          setState(JSON.parse(storedState));
-        }
-      } catch (error) {
-        console.error('Error to load saved state:', error);
-      }
-    };
-
-    loadStoredState();
-  }, [key]);
-
-  const asyncSetState = async (newState: any, callback = () => {}) => {
-    try {
-      const stateToSave = newState !== undefined ? newState : state;
-      await AsyncStorage.setItem(key, JSON.stringify(stateToSave));
-      callback();
-    } catch (error) {
-      Alert.alert(i18n.t('vpl3_error_to_saved_program'), JSON.stringify(error));
-    }
-  };
-
-  useEffect(() => {
-    const _saveState = async () => {
-      try {
-        await AsyncStorage.setItem(key, JSON.stringify(state));
-      } catch (error) {
-        Alert.alert(
-          i18n.t('vpl3_error_to_saved_program'),
-          JSON.stringify(error),
-        );
-      }
-    };
-
-    _saveState();
-  }, [state, key]);
-
-  return [state, setState, asyncSetState];
-}
+const VPL_STATE_KEY = 'vpl3State';
+const VPL_DEFAULT_STATE: VPLState = {
+  basicBlocks: [
+    'init',
+    'button 1',
+    'acc side',
+    'acc upside down',
+    'tap',
+    'ground mean',
+    'ground',
+    'horiz prox',
+    'color 8 state',
+    'bottom color 8 state',
+    'state 256',
+    'move',
+    'top color 8',
+    'bottom color 8',
+    'set state 256',
+    'notes',
+  ],
+  basicMultiEvent: true,
+  disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
+  program: [],
+};
 
 const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
   Alert.alert(
-      i18n.t('vpl3_confirm_quit1'),
-      i18n.t('vpl3_confirm_quit2'),
-      [
-        {
-          text: i18n.t('vpl3_quit_calcel'),
-          onPress: () => console.log('Annulation'),
-          style: 'cancel',
+    i18n.t('vpl3_confirm_quit1'),
+    i18n.t('vpl3_confirm_quit2'),
+    [
+      {
+        text: i18n.t('vpl3_quit_cancel'),
+        onPress: () => console.log('Annulation'),
+        style: 'cancel',
+      },
+      {
+        text: i18n.t('vpl3_quit_without_save'),
+        onPress: () => {
+          webViewRef.current.postMessage(
+            JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
+          );
         },
-        {
-          text: i18n.t('vpl3_quit_without_save'),
-          onPress: () => {
+      },
+      {
+        text: i18n.t('vpl3_quit_with_save'),
+        onPress: () => {
+          if (webViewRef.current) {
             webViewRef.current.postMessage(
-              JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
+              JSON.stringify({
+                action: 'getProgram',
+                spec: 'toSaveAndQuit',
+              }),
             );
-          },
+          } else {
+            console.log('webViewRef.current no existe');
+          }
         },
-        {
-          text: i18n.t('vpl3_quit_with_save'),
-          onPress: () => {
-            if (webViewRef.current) {
-              webViewRef.current.postMessage(
-                JSON.stringify({
-                  action: 'getProgram',
-                  spec: 'toSaveAndQuit',
-                }),
-              );
-            } else {
-              console.log('webViewRef.current no existe');
-            }
-          },
-        },
-      ],
-      {cancelable: true},
-    );
+      },
+    ],
+    {cancelable: true},
+  );
 };
 
 function App(props: any): JSX.Element {
   const navigation = useNavigation();
   const {language, i18n} = useLanguage();
 
-  const { name, uuid, address, port } = props.route.params;
+  const {name, uuid, address, port} = props.route.params;
   const appURI = `http://127.0.0.1:3000/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
   const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
   const isDarkMode = useColorScheme() === 'dark';
   const [webview, setWebview] = useState('scanner');
-  const [dialogVisible, setDialogVisible] = useState<string | null>(null);
+  const [dialogVisible, setDialogVisible] = useState<VPLState | null>(null);
   const [fileName, setFileName] = useState('vpl3-program');
-  const [config, setConfig, asyncSetConfig] = usePersistentState('vpl3Config', {
-    basicBlocks: [
-      'init',
-      'button 1',
-      'acc side',
-      'acc upside down',
-      'tap',
-      'ground mean',
-      'ground',
-      'horiz prox',
-      'color 8 state',
-      'bottom color 8 state',
-      'state 256',
-      'move',
-      'top color 8',
-      'bottom color 8',
-      'set state 256',
-      'notes',
-    ],
-    basicMultiEvent: true,
-    disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
-    program: [],
-  });
+  const [quit, setQuit] = useState(false);
+  const [vplState, setVPLState] = useState(VPL_DEFAULT_STATE);
 
   useEffect(() => {
-    const path = `${MainBundlePath}/www`;
+    const loadFromStorage = async () => {
+      try {
+        const storedState = await AsyncStorage.getItem(VPL_STATE_KEY);
 
-    const server = new Server({
-      fileDir: path,
-      port: 3000,
-      stopInBackground: false
-    });
-
-    server.start().then((url:string) => {
-      console.log('Server running at:', url);
-    });
-
-    // Stop the server when the component unmounts
-    return () => {
-      server.stop().then(() => console.log('Server stopped'));
+        if (storedState !== null) {
+          setVPLState(JSON.parse(storedState));
+        }
+      } catch (error) {
+        console.error('Error to load saved state:', error);
+      }
     };
+
+    loadFromStorage();
   }, []);
 
-  const backgroundStyle = {
-    backgroundColor: '#201439',
+  const asyncSetState = async (newState: VPLState, callback = () => {}) => {
+    try {
+      const stateToSave = newState !== undefined ? newState : vplState;
+      await AsyncStorage.setItem(VPL_STATE_KEY, JSON.stringify(stateToSave));
+      callback();
+    } catch (error) {
+      Alert.alert(i18n.t('vpl3_error_to_saved_program'), JSON.stringify(error));
+    }
   };
+
+  if (Platform.OS === 'ios') {
+    useEffect(() => {
+      const path = `${MainBundlePath}/www`;
+
+      const server = new Server({
+        fileDir: path,
+        port: 3000,
+        stopInBackground: false,
+      });
+
+      server.start().then((url: string) => {
+        console.log('Server running at:', url);
+      });
+
+      // Stop the server when the component unmounts
+      return () => {
+        server.stop().then(() => console.log('Server stopped'));
+      };
+    }, []);
+  }
 
   const loadFile = async () => {
     try {
@@ -190,16 +196,16 @@ function App(props: any): JSX.Element {
       const res = results[0];
 
       if (res.name === null) {
-        throw new Error('File could not be loaded')
+        throw new Error('File could not be loaded');
       }
 
       const fileExtension = res.name.split('.').pop();
-      if(fileExtension !== 'vpl3') {
+      if (fileExtension !== 'vpl3') {
         throw new Error(i18n.t('vpl3_can_only_read_vpl_files'));
       }
 
       let filePath: string;
-      if(Platform.OS === 'ios') {
+      if (Platform.OS === 'ios') {
         let arr = res.uri.split('/');
         filePath = `${DocumentDirectoryPath}/${arr[arr.length - 1]}`;
       } else {
@@ -212,7 +218,7 @@ function App(props: any): JSX.Element {
 
       console.log('File:', file);
 
-      setConfig(JSON.parse(file));
+      setVPLState(JSON.parse(file));
 
       console.log('Programa cargado');
 
@@ -227,20 +233,12 @@ function App(props: any): JSX.Element {
         console.log('File selection cancelled');
       } else {
         console.log('Error selecting file:', err);
-        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
+        Toast.showWithGravity(
+          (err as Error).message,
+          Toast.SHORT,
+          Toast.BOTTOM,
+        );
       }
-    }
-  };
-
-  const shareFile = async (filePath: any) => {
-    console.log(`Intentando compartir archivo: ${filePath}`); // Asegúrate de que esto se imprima
-    try {
-      const shareResponse = await Share.open({
-        url: `file://${filePath}`,
-      });
-      console.log('Archivo compartido con éxito:', shareResponse);
-    } catch (error) {
-      console.log('Error al compartir el archivo:', error);
     }
   };
 
@@ -253,7 +251,7 @@ function App(props: any): JSX.Element {
       console.log('JSON', jsonData);
 
       let documentDir;
-      if(Platform.OS === 'ios') {
+      if (Platform.OS === 'ios') {
         documentDir = DocumentDirectoryPath;
       } else {
         documentDir = DownloadDirectoryPath;
@@ -266,13 +264,7 @@ function App(props: any): JSX.Element {
       }
 
       const path = `${documentDir}/${filename}`;
-      console.log('THE path is', path)
-
-      /*
-      if (await exists(path)) {
-        throw new Error(i18n.t('file_exist'));
-      }
-        */
+      console.log('THE path is', path);
 
       await writeFile(path, jsonData, 'utf8');
       console.log('The file saved successfully in path:', path);
@@ -302,7 +294,28 @@ function App(props: any): JSX.Element {
       return path;
     } catch (error: unknown) {
       console.error('Error saving the JSON file:', error);
-      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
+      Toast.showWithGravity(
+        (error as Error).message,
+        Toast.SHORT,
+        Toast.BOTTOM,
+      );
+    }
+  };
+
+  const handleSave = async () => {
+    await saveJsonFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
+    setDialogVisible(null);
+  };
+
+  const shareFile = async (filePath: any) => {
+    console.log(`Intentando compartir archivo: ${filePath}`); // Asegúrate de que esto se imprima
+    try {
+      const shareResponse = await Share.open({
+        url: `file://${filePath}`,
+      });
+      console.log('Archivo compartido con éxito:', shareResponse);
+    } catch (error) {
+      console.log('Error al compartir el archivo:', error);
     }
   };
 
@@ -311,9 +324,7 @@ function App(props: any): JSX.Element {
       headerTitle: () => (
         <View style={styles.titleContainer}>
           <LauncherIcon />
-          <Text style={styles.titleBar}>
-            {name}
-          </Text>
+          <Text style={styles.titleBar}>{name}</Text>
         </View>
       ),
       headerLeft: () => (
@@ -341,7 +352,6 @@ function App(props: any): JSX.Element {
     });
   }, [webview, webViewRef]);
 
-
   const injectedJavaScript = useMemo(() => {
     const js = `
 
@@ -350,7 +360,7 @@ function App(props: any): JSX.Element {
           const data = JSON.parse(event.data);
           if (data.action === 'getProgram') {
             const programJSON = window.vplGetProgramAsJSON();
-            window.ReactNativeWebView.postMessage(JSON.stringify({ saved: programJSON, spec: data.spec }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: programJSON, spec: data.spec }));
           } else if (data.action === 'setProgram') {
             window.vplApp.loadProgramFile(JSON.parse(data.program));
           }
@@ -372,16 +382,16 @@ function App(props: any): JSX.Element {
             }
             throw new Error('Network response was not ok.');
           }).then(data => {
-            window.ReactNativeWebView.postMessage(data);
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: data, spec: undefined }));
           }).catch(error => {
             console.error('Error fetching blob data:', error);
-            window.ReactNativeWebView.postMessage(JSON.stringify({error: error.toString()}));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: null, spec: null, error: error.toString() }));
           });
         }
       }, false);
 
       window["vplStorageGetFunction"] = function (filename, load) {
-        program = JSON.stringify(${JSON.stringify(config, null, 2)});
+        program = JSON.stringify(${JSON.stringify(vplState, null, 2)});
         load(program);
       };
 
@@ -389,33 +399,41 @@ function App(props: any): JSX.Element {
     `;
 
     return js;
-  }, [config]);
+  }, [vplState]);
 
-  const [quit, setQuit] = useState(false);
-
-  const handleOnMessage = (event: {nativeEvent: {data: any}}) => {
-    const _data = event.nativeEvent.data;
+  const handleOnMessage = (event: {nativeEvent: {data: string}}) => {
+    const dataString = event.nativeEvent.data;
 
     if (
-      !_data ||
-      _data === 'null' ||
-      _data === 'undefined' ||
-      _data[0] === '<'
+      !dataString ||
+      dataString === 'null' ||
+      dataString === 'undefined' ||
+      dataString[0] === '<'
     ) {
       return;
     }
 
-    const objectData = JSON.parse(_data);
+    const dataObject = JSON.parse(dataString) as WebViewMessage;
+    console.log('DATA OBJECT', dataObject);
 
-    if (objectData.spec === 'toSaveAndQuit') {
-      asyncSetConfig(JSON.parse(objectData.saved), () => {
+    let state: VPLState | undefined;
+    if (dataObject.state) {
+      state = JSON.parse(dataObject.state);
+    }
+
+    if (dataObject.spec === 'toSaveAndQuit' && state) {
+      asyncSetState(state, () => {
         setQuit(true);
-        setDialogVisible(objectData);
+        setDialogVisible(state);
       });
-    } else if (objectData.spec === 'toQuit' || objectData.saved) {
-      asyncSetConfig(JSON.parse(objectData.saved), () => {
+    } else if (dataObject.spec === 'toQuit') {
+      if (state) {
+        asyncSetState(state, () => {
+          navigation.dispatch(CommonActions.goBack());
+        });
+      } else {
         navigation.dispatch(CommonActions.goBack());
-      });
+      }
     } else {
       Alert.alert(
         i18n.t('vpl3_program_management'),
@@ -424,14 +442,8 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('vpl3_program_new'),
             onPress: () => {
-              setConfig({
-                basicBlocks: config.basicBlocks,
-                basicMultiEvent: true,
-                disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
-                program: [],
-              });
+              setVPLState(VPL_DEFAULT_STATE);
 
-              console.log('Programa cargado');
               webViewRef.current.reload();
             },
           },
@@ -444,7 +456,11 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('vpl3_program_save'),
             onPress: () => {
-              setDialogVisible(objectData);
+              if (state) {
+                setDialogVisible(state);
+              } else {
+                setDialogVisible(VPL_DEFAULT_STATE);
+              }
             },
           },
           {
@@ -473,11 +489,6 @@ function App(props: any): JSX.Element {
     [isDownloadAction],
   );
 
-  const handleSave = () => {
-    saveJsonFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
-    setDialogVisible(null);
-  };
-
   const openURL = (_url: string) => {
     Linking.canOpenURL(_url)
       .then(supported => {
@@ -494,7 +505,7 @@ function App(props: any): JSX.Element {
     <SafeAreaView style={styles.root}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor="#201439"
       />
       <View style={{marginTop: 22}}>
         <Dialog.Container
@@ -514,7 +525,7 @@ function App(props: any): JSX.Element {
             value={fileName}
           />
           <Dialog.Button
-            label={i18n.t('scratch_saveForm_labelButton_calcel')}
+            label={i18n.t('scratch_saveForm_labelButton_cancel')}
             onPress={() => setDialogVisible(null)}
           />
           <Dialog.Button
@@ -528,7 +539,7 @@ function App(props: any): JSX.Element {
           <View style={{height: 25}} />
           <WebView
             source={{
-              uri: encodedURI
+              uri: encodedURI,
             }}
             onMessage={handleOnMessage}
             ref={webViewRef}
@@ -567,8 +578,6 @@ function App(props: any): JSX.Element {
     </SafeAreaView>
   );
 }
-
-export default App;
 
 const styles = StyleSheet.create({
   root: {
@@ -623,3 +632,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default App;
