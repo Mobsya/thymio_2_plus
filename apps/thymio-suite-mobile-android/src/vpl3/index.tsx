@@ -1,189 +1,227 @@
-import React, {MutableRefObject, useCallback, useEffect, useMemo, useRef, useState} from 'react';
-
+import React, {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
+  Text,
   useColorScheme,
   View,
   Dimensions,
+  TouchableOpacity,
   Linking,
   Alert,
-  PermissionsAndroid,
-  Text,
-  TouchableOpacity,
   Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
 
 import {WebView, WebViewNavigation} from 'react-native-webview';
+import BackIcon from '../assets/back-icon';
+import HelpIcon from '../assets/launcher-icon-help-blue';
 import {CommonActions, useNavigation} from '@react-navigation/native';
 
-import {getQueryParams} from '../helpers/parsers';
+import {getPathAfterLocalhost} from '../helpers/parsers';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {i18n, useLanguage} from '../i18n';
 
-import LauncherIcon from '../assets/launcher-icon-vpl';
-import BackIcon from '../assets/back-icon';
-import HelpIcon from '../assets/launcher-icon-help-blue';
-import webview from '../components/webview';
 import DocumentPicker from 'react-native-document-picker';
-import { I18n } from 'i18n-js';
+import {I18n} from 'i18n-js';
 import Toast from 'react-native-simple-toast';
-import { copyFile, DocumentDirectoryPath, DownloadDirectoryPath, exists, readFile, TemporaryDirectoryPath, writeFile } from '@dr.pogodin/react-native-fs';
+import Server from '@dr.pogodin/react-native-static-server';
 
-function usePersistentState(key: any, initialValue: any) {
-  const {i18n} = useLanguage();
+import LauncherIcon from '../assets/launcher-icon-vpl';
+import {
+  copyFile,
+  DocumentDirectoryPath,
+  DownloadDirectoryPath,
+  exists,
+  MainBundlePath,
+  readFile,
+  TemporaryDirectoryPath,
+  writeFile,
+} from '@dr.pogodin/react-native-fs';
 
-  const [state, setState] = useState(initialValue);
+type VPLState = {
+  basicBlocks: string[];
+  basicMultiEvent: boolean;
+  disabledUI: string[];
+  program: any[];
+};
 
-  // Cargar el estado guardado al inicializar
-  useEffect(() => {
-    const loadStoredState = async () => {
-      try {
-        const storedState = await AsyncStorage.getItem(key);
+type WebViewMessage = {
+  state: string;
+  spec: string;
+  error?: string;
+};
 
-        if (storedState !== null) {
-          setState(JSON.parse(storedState));
-        }
-      } catch (error) {
-        console.error('Error to load saved state:', error);
-      }
-    };
+const URL_PREFIX =
+  Platform.OS === 'ios' ? 'http://127.0.0.1:3000' : 'file:///android_asset';
 
-    loadStoredState();
-  }, [key]);
+const VPL_STATE_KEY = 'vpl3State';
+const VPL_DEFAULT_STATE: VPLState = {
+  basicBlocks: [
+    'init',
+    'button 1',
+    'acc side',
+    'acc upside down',
+    'tap',
+    'ground mean',
+    'ground',
+    'horiz prox',
+    'color 8 state',
+    'bottom color 8 state',
+    'state 256',
+    'move',
+    'top color 8',
+    'bottom color 8',
+    'set state 256',
+    'notes',
+  ],
+  basicMultiEvent: true,
+  disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
+  program: [],
+};
 
-  const asyncSetState = async (newState: any, callback = () => {}) => {
+async function requestStoragePermission() {
+  if (Platform.OS === 'android') {
     try {
-      const stateToSave = newState !== undefined ? newState : state;
-      await AsyncStorage.setItem(key, JSON.stringify(stateToSave));
-      callback();
-    } catch (error) {
-      Alert.alert(i18n.t('vpl3_error_to_saved_program'), JSON.stringify(error));
-    }
-  };
-
-  useEffect(() => {
-    const _saveState = async () => {
-      try {
-        await AsyncStorage.setItem(key, JSON.stringify(state));
-      } catch (error) {
-        Alert.alert(
-          i18n.t('vpl3_error_to_saved_program'),
-          JSON.stringify(error),
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: i18n.t('storage_permission_title'),
+          message: i18n.t('storage_permission_description'),
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return true;
+      } else {
+        Toast.showWithGravity(
+          i18n.t('storage_permission_description'),
+          Toast.LONG,
+          Toast.BOTTOM,
         );
+        return false;
       }
-    };
-
-    _saveState();
-  }, [state, key]);
-
-  return [state, setState, asyncSetState];
-}
-
-async function requestStoragePermission(callback: () => void) {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      {
-        title: i18n.t('storage_permission_title'),
-        message: i18n.t('storage_permission_description'),
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      callback();
-    } else {
-      Toast.showWithGravity(i18n.t('storage_permission_description'), Toast.LONG, Toast.BOTTOM);
+    } catch (err) {
+      console.warn(err);
+      return false;
     }
-  } catch (err) {
-    console.warn(err);
+  } else {
+    return true;
   }
 }
 
 const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
-    Alert.alert(
-        i18n.t('vpl3_confirm_quit1'),
-        i18n.t('vpl3_confirm_quit2'),
-        [
-          {
-            text: i18n.t('vpl3_quit_calcel'),
-            onPress: () => console.log('Annulation'),
-            style: 'cancel',
-          },
-          {
-            text: i18n.t('vpl3_quit_without_save'),
-            onPress: () => {
-              webViewRef.current.postMessage(
-                JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
-              );
-            },
-          },
-          {
-            text: i18n.t('vpl3_quit_with_save'),
-            onPress: () => {
-              if (webViewRef.current) {
-                webViewRef.current.postMessage(
-                  JSON.stringify({
-                    action: 'getProgram',
-                    spec: 'toSaveAndQuit',
-                  }),
-                );
-              } else {
-                console.log('webViewRef.current no existe');
-              }
-            },
-          },
-        ],
-        {cancelable: true},
-      );
+  Alert.alert(
+    i18n.t('vpl3_confirm_quit1'),
+    i18n.t('vpl3_confirm_quit2'),
+    [
+      {
+        text: i18n.t('vpl3_quit_cancel'),
+        onPress: () => console.log('Annulation'),
+        style: 'cancel',
+      },
+      {
+        text: i18n.t('vpl3_quit_without_save'),
+        onPress: () => {
+          webViewRef.current.postMessage(
+            JSON.stringify({action: 'getProgram', spec: 'toQuit'}),
+          );
+        },
+      },
+      {
+        text: i18n.t('vpl3_quit_with_save'),
+        onPress: () => {
+          if (webViewRef.current) {
+            webViewRef.current.postMessage(
+              JSON.stringify({
+                action: 'getProgram',
+                spec: 'toSaveAndQuit',
+              }),
+            );
+          } else {
+            console.log('webViewRef.current no existe');
+          }
+        },
+      },
+    ],
+    {cancelable: true},
+  );
 };
 
 function App(props: any): JSX.Element {
   const navigation = useNavigation();
   const {language, i18n} = useLanguage();
 
-  const { name, uuid, address, port } = props.route.params;
-  const appURI = `file:///android_asset/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
+  const {name, uuid, address, port} = props.route.params;
+  const appURI = `${URL_PREFIX}/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
   const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
   const isDarkMode = useColorScheme() === 'dark';
-  const [queryParams, setQueryParams] = useState<any>({});
-  const [url, setUrl] = useState<string>('');
-  const [dialogVisible, setDialogVisible] = useState<string | null>(null);
+  const [webview, setWebview] = useState('scanner');
+  const [dialogVisible, setDialogVisible] = useState<VPLState | null>(null);
   const [fileName, setFileName] = useState('vpl3-program');
-  const [config, setConfig, asyncSetConfig] = usePersistentState('vpl3Config', {
-    basicBlocks: [
-      'init',
-      'button 1',
-      'acc side',
-      'acc upside down',
-      'tap',
-      'ground mean',
-      'ground',
-      'horiz prox',
-      'color 8 state',
-      'bottom color 8 state',
-      'state 256',
-      'move',
-      'top color 8',
-      'bottom color 8',
-      'set state 256',
-      'notes',
-    ],
-    basicMultiEvent: true,
-    disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
-    program: [],
-  });
+  const [quit, setQuit] = useState(false);
+  const [vplState, setVPLState] = useState(VPL_DEFAULT_STATE);
 
-  const backgroundStyle = {
-    backgroundColor: '#201439',
+  useEffect(() => {
+    const loadFromStorage = async () => {
+      try {
+        const storedState = await AsyncStorage.getItem(VPL_STATE_KEY);
+
+        if (storedState !== null) {
+          setVPLState(JSON.parse(storedState));
+        }
+      } catch (error) {
+        console.error('Error to load saved state:', error);
+      }
+    };
+
+    loadFromStorage();
+  }, []);
+
+  const asyncSetState = async (newState: VPLState, callback = () => {}) => {
+    try {
+      const stateToSave = newState !== undefined ? newState : vplState;
+      await AsyncStorage.setItem(VPL_STATE_KEY, JSON.stringify(stateToSave));
+      callback();
+    } catch (error) {
+      Alert.alert(i18n.t('vpl3_error_to_saved_program'), JSON.stringify(error));
+    }
   };
+
+  if (Platform.OS === 'ios') {
+    useEffect(() => {
+      const path = `${MainBundlePath}/www`;
+
+      const server = new Server({
+        fileDir: path,
+        port: 3000,
+        stopInBackground: false,
+      });
+
+      server.start().then((url: string) => {
+        console.log('Server running at:', url);
+      });
+
+      // Stop the server when the component unmounts
+      return () => {
+        server.stop().then(() => console.log('Server stopped'));
+      };
+    }, []);
+  }
 
   const loadFile = async () => {
     try {
@@ -194,16 +232,16 @@ function App(props: any): JSX.Element {
       const res = results[0];
 
       if (res.name === null) {
-        throw new Error('File could not be loaded')
+        throw new Error('File could not be loaded');
       }
 
       const fileExtension = res.name.split('.').pop();
-      if(fileExtension !== 'vpl3') {
+      if (fileExtension !== 'vpl3') {
         throw new Error(i18n.t('vpl3_can_only_read_vpl_files'));
       }
 
       let filePath: string;
-      if(Platform.OS === 'ios') {
+      if (Platform.OS === 'ios') {
         let arr = res.uri.split('/');
         filePath = `${DocumentDirectoryPath}/${arr[arr.length - 1]}`;
       } else {
@@ -216,32 +254,29 @@ function App(props: any): JSX.Element {
 
       console.log('File:', file);
 
-      setConfig(JSON.parse(file));
+      setVPLState(JSON.parse(file));
 
       console.log('Programa cargado');
 
-      webViewRef.current.postMessage(
-        JSON.stringify({action: 'setProgram', program: file}),
-      );
+      // TODO Investigate the different behaviour between the platforms
+      if (Platform.OS === 'ios') {
+        webViewRef.current.reload();
+      } else {
+        webViewRef.current.postMessage(
+          JSON.stringify({action: 'setProgram', program: file}),
+        );
+      }
     } catch (err: unknown) {
       if (DocumentPicker.isCancel(err)) {
         console.log('File selection cancelled');
       } else {
         console.log('Error selecting file:', err);
-        Toast.showWithGravity((err as Error).message, Toast.SHORT, Toast.BOTTOM);
+        Toast.showWithGravity(
+          (err as Error).message,
+          Toast.SHORT,
+          Toast.BOTTOM,
+        );
       }
-    }
-  };
-
-  const shareFile = async (filePath: any) => {
-    console.log(`Intentando compartir archivo: ${filePath}`);
-    try {
-      const shareResponse = await Share.open({
-        url: `file://${filePath}`,
-      });
-      console.log('Archivo compartido con éxito:', shareResponse);
-    } catch (error) {
-      console.log('Error al compartir el archivo:', error);
     }
   };
 
@@ -254,7 +289,7 @@ function App(props: any): JSX.Element {
       console.log('JSON', jsonData);
 
       let documentDir;
-      if(Platform.OS === 'ios') {
+      if (Platform.OS === 'ios') {
         documentDir = DocumentDirectoryPath;
       } else {
         documentDir = DownloadDirectoryPath;
@@ -267,10 +302,7 @@ function App(props: any): JSX.Element {
       }
 
       const path = `${documentDir}/${filename}`;
-
-      if (await exists(path)) {
-        throw new Error(i18n.t('file_exist'));
-      }
+      console.log('THE path is', path);
 
       await writeFile(path, jsonData, 'utf8');
       console.log('The file saved successfully in path:', path);
@@ -300,60 +332,33 @@ function App(props: any): JSX.Element {
       return path;
     } catch (error: unknown) {
       console.error('Error saving the JSON file:', error);
-      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
+      Toast.showWithGravity(
+        (error as Error).message,
+        Toast.SHORT,
+        Toast.BOTTOM,
+      );
     }
   };
 
-  const injectedJavaScript = useMemo(() => {
-    const js = `
+  const handleSave = async () => {
+    const hasPermission = await requestStoragePermission();
+    if (hasPermission) {
+      await saveFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
+      setDialogVisible(null);
+    }
+  };
 
-      function handleMessage(event) {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.action === 'getProgram') {
-            const programJSON = window.vplGetProgramAsJSON();
-            window.ReactNativeWebView.postMessage(JSON.stringify({ saved: programJSON, spec: data.spec }));
-          } else if (data.action === 'setProgram') {
-            window.vplApp.loadProgramFile(JSON.parse(data.program));
-          }
-        } catch(e) {
-          console.error('Error procesando el mensaje:', e);
-        }
-      }
-
-      document.addEventListener('message', handleMessage);
-      window.addEventListener('message', handleMessage);
-
-      window.addEventListener('click', function(e) {
-        // Intercepta clics o solicitudes de descarga y envía el contenido a React Native
-        if (e.target.href && e.target.href.startsWith('blob:')) {
-          e.preventDefault();
-          fetch(e.target.href).then(response => {
-            if (response.ok) {
-              return response.text();
-            }
-            throw new Error('Network response was not ok.');
-          }).then(data => {
-            window.ReactNativeWebView.postMessage(data);
-          }).catch(error => {
-            console.error('Error fetching blob data:', error);
-            window.ReactNativeWebView.postMessage(JSON.stringify({error: error.toString()}));
-          });
-        }
-      }, false);
-
-      window["vplStorageGetFunction"] = function (filename, load) {
-        program = JSON.stringify(${JSON.stringify(config, null, 2)});
-        load(program);
-      };
-
-      true; // nota: siempre termina con true para evitar warnings
-    `;
-
-    return js;
-  }, [config]);
-
-  const [quit, setQuit] = useState(false);
+  const shareFile = async (filePath: any) => {
+    console.log(`Intentando compartir archivo: ${filePath}`); // Asegúrate de que esto se imprima
+    try {
+      const shareResponse = await Share.open({
+        url: `file://${filePath}`,
+      });
+      console.log('Archivo compartido con éxito:', shareResponse);
+    } catch (error) {
+      console.log('Error al compartir el archivo:', error);
+    }
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -388,29 +393,88 @@ function App(props: any): JSX.Element {
     });
   }, [webview, webViewRef]);
 
-  const handleOnMessage = (event: {nativeEvent: {data: any}}) => {
-    const _data = event.nativeEvent.data;
+  const injectedJavaScript = useMemo(() => {
+    const js = `
+
+      function handleMessage(event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.action === 'getProgram') {
+            const programJSON = window.vplGetProgramAsJSON();
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: programJSON, spec: data.spec }));
+          } else if (data.action === 'setProgram') {
+            window.vplApp.loadProgramFile(JSON.parse(data.program));
+          }
+        } catch(e) {
+          console.error('Error procesando el mensaje:', e);
+        }
+      }
+
+      document.addEventListener('message', handleMessage);
+      window.addEventListener('message', handleMessage);
+
+      window.addEventListener('click', function(e) {
+        // Intercepta clics o solicitudes de descarga y envía el contenido a React Native
+        if (e.target.href && e.target.href.startsWith('blob:')) {
+          e.preventDefault();
+          fetch(e.target.href).then(response => {
+            if (response.ok) {
+              return response.text();
+            }
+            throw new Error('Network response was not ok.');
+          }).then(data => {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: data, spec: undefined }));
+          }).catch(error => {
+            console.error('Error fetching blob data:', error);
+            window.ReactNativeWebView.postMessage(JSON.stringify({ state: null, spec: null, error: error.toString() }));
+          });
+        }
+      }, false);
+
+      window["vplStorageGetFunction"] = function (filename, load) {
+        program = JSON.stringify(${JSON.stringify(vplState, null, 2)});
+        load(program);
+      };
+
+      true; // nota: siempre termina con true para evitar warnings
+    `;
+
+    return js;
+  }, [vplState]);
+
+  const handleOnMessage = (event: {nativeEvent: {data: string}}) => {
+    const dataString = event.nativeEvent.data;
 
     if (
-      !_data ||
-      _data === 'null' ||
-      _data === 'undefined' ||
-      _data[0] === '<'
+      !dataString ||
+      dataString === 'null' ||
+      dataString === 'undefined' ||
+      dataString[0] === '<'
     ) {
       return;
     }
 
-    const objectData = JSON.parse(_data);
+    const dataObject = JSON.parse(dataString) as WebViewMessage;
+    console.log('DATA OBJECT', dataObject);
 
-    if (objectData.spec === 'toSaveAndQuit') {
-      asyncSetConfig(JSON.parse(objectData.saved), () => {
+    let state: VPLState | undefined;
+    if (dataObject.state) {
+      state = JSON.parse(dataObject.state);
+    }
+
+    if (dataObject.spec === 'toSaveAndQuit' && state) {
+      asyncSetState(state, () => {
         setQuit(true);
-        setDialogVisible(objectData);
+        setDialogVisible(state);
       });
-    } else if (objectData.spec === 'toQuit' || objectData.saved) {
-      asyncSetConfig(JSON.parse(objectData.saved), () => {
+    } else if (dataObject.spec === 'toQuit') {
+      if (state) {
+        asyncSetState(state, () => {
+          navigation.dispatch(CommonActions.goBack());
+        });
+      } else {
         navigation.dispatch(CommonActions.goBack());
-      });
+      }
     } else {
       Alert.alert(
         i18n.t('vpl3_program_management'),
@@ -419,34 +483,35 @@ function App(props: any): JSX.Element {
           {
             text: i18n.t('vpl3_program_new'),
             onPress: () => {
-              setConfig({
-                basicBlocks: config.basicBlocks,
-                basicMultiEvent: true,
-                disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
-                program: [],
-              });
+              setVPLState(VPL_DEFAULT_STATE);
 
-              console.log('Programa cargado');
               webViewRef.current.reload();
             },
           },
           {
             text: i18n.t('vpl3_program_load'),
-            style: 'destructive',
-            onPress: () => {
-              requestStoragePermission(() => {
+            onPress: async () => {
+              const hasPermission = await requestStoragePermission();
+              if (hasPermission) {
                 loadFile();
-              });
+              }
             },
           },
           {
             text: i18n.t('vpl3_program_save'),
             onPress: () => {
-              setDialogVisible(objectData);
+              if (state) {
+                setDialogVisible(state);
+              } else {
+                setDialogVisible(VPL_DEFAULT_STATE);
+              }
             },
           },
+          {
+            text: i18n.t('scratch_cancel'),
+          },
         ],
-        {cancelable: true},
+        { cancelable: true }
       );
     }
   };
@@ -457,22 +522,17 @@ function App(props: any): JSX.Element {
 
   const handleNavigationStateChange = useCallback(
     (event: any) => {
-      if (event.title === 'VPL') {
-        setQueryParams(getQueryParams(event.url));
-        console.log('newHost::2:->', event.url);
-        setUrl(event.url);
+      if (isDownloadAction(event.url)) {
+        // Detiene la carga en el WebView y maneja la descarga
+        webViewRef.current?.stopLoading();
+      } else {
+        // Si no es una descarga, pasa el evento a la función onChange propuesta
+
+        setWebview(getPathAfterLocalhost(event.url));
       }
-      return;
     },
     [isDownloadAction],
   );
-
-  const handleSave = () => {
-    requestStoragePermission(() => {
-      saveFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
-      setDialogVisible(null);
-    });
-  };
 
   const openURL = (_url: string) => {
     Linking.canOpenURL(_url)
@@ -490,78 +550,78 @@ function App(props: any): JSX.Element {
     <SafeAreaView style={styles.root}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor="#201439"
       />
+      <View style={{marginTop: 22}}>
+        <Dialog.Container
+          visible={dialogVisible !== null}
+          supportedOrientations={['landscape']}>
+          <Dialog.Title>{i18n.t('scratch_saveForm_title')}</Dialog.Title>
+          <Dialog.Description>
+            {i18n.t('scratch_saveForm_info')}
+          </Dialog.Description>
+          <Dialog.Input
+            wrapperStyle={{
+              borderWidth: 1,
+              borderColor: 'gray',
+              borderRadius: 5,
+            }}
+            onChangeText={text => setFileName(text)}
+            value={fileName}
+          />
+          <Dialog.Button
+            label={i18n.t('scratch_saveForm_labelButton_cancel')}
+            onPress={() => setDialogVisible(null)}
+          />
+          <Dialog.Button
+            label={i18n.t('scratch_saveForm_labelButton_save')}
+            onPress={handleSave}
+          />
+        </Dialog.Container>
+      </View>
       <View style={styles.rootHiddenContainer}>
         <View style={styles.hiddenContainer}>
-          <Dialog.Container visible={dialogVisible !== null}>
-            <Dialog.Title style={{color: 'black'}}>
-              {i18n.t('scratch_saveForm_title')}
-            </Dialog.Title>
-            <Dialog.Description style={{color: 'black'}}>
-              {i18n.t('scratch_saveForm_info')}
-            </Dialog.Description>
-            <Dialog.Input
-              wrapperStyle={{
-                borderWidth: 1,
-                borderColor: 'gray',
-                borderRadius: 2,
-              }}
-              style={{color: 'black'}}
-              onChangeText={text => setFileName(text)}
-              value={fileName}
-            />
-            <Dialog.Button
-              label={i18n.t('scratch_saveForm_labelButton_calcel')}
-              onPress={() => setDialogVisible(null)}
-            />
-            <Dialog.Button
-              label={i18n.t('scratch_saveForm_labelButton_save')}
-              onPress={handleSave}
-            />
-          </Dialog.Container>
+          <View style={{height: 25}} />
           <WebView
             source={{
               uri: encodedURI,
             }}
             onMessage={handleOnMessage}
             ref={webViewRef}
-            style={{
-              flex: 1,
-              width: Dimensions.get('screen').width,
-              height: Dimensions.get('screen').height,
-            }}
             startInLoadingState
             originWhitelist={['*']}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             injectedJavaScript={injectedJavaScript}
+            style={{flex: 1}}
             onError={syntheticEvent => {
               const {nativeEvent} = syntheticEvent;
               console.warn('WebView error: ', nativeEvent);
             }}
             onNavigationStateChange={handleNavigationStateChange}
             incognito={true}
-            onShouldStartLoadWithRequest={(webRequest: WebViewNavigation) => {
-              console.log('request.url::--->', webRequest.url);
-
-              if (webRequest.url.includes('localhost')) {
+            onShouldStartLoadWithRequest={(request: WebViewNavigation) => {
+              // console.log('request.url::--->', request.url);
+              if (request.url.includes('localhost')) {
                 return true;
               }
 
-              if (webRequest.url.includes('blob:')) {
+              if (request.url.includes('blob:')) {
                 return true;
               }
 
-              if (webRequest.url.includes('127.0.0.1')) {
+              if (Platform.OS === 'ios' && request.url.includes('127.0.0.1')) {
                 return true;
               }
 
-              if (webRequest.url.includes('file:///android_asset')) {
+              if (
+                Platform.OS === 'android' &&
+                request.url.includes('file:///android_asset')
+              ) {
                 return true;
               }
 
-              openURL(webRequest.url);
+              openURL(request.url);
               return false;
             }}
           />
@@ -571,13 +631,11 @@ function App(props: any): JSX.Element {
   );
 }
 
-export default App;
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
     height: Dimensions.get('screen').height,
     width: Dimensions.get('screen').width,
   },
@@ -589,24 +647,28 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    width: Dimensions.get('screen').width,
-    height: Dimensions.get('screen').height,
+    width: '100%',
+    height: '100%',
   },
   rootHiddenContainer: {
     flex: 1,
     height: Dimensions.get('screen').height,
     width: Dimensions.get('screen').width,
+    position: 'absolute',
+    zIndex: 1,
     backgroundColor: 'white',
   },
   hiddenContainer: {
     flex: 1,
     height: Dimensions.get('screen').height,
     width: Dimensions.get('screen').width,
+    position: 'absolute',
+    zIndex: 2,
     backgroundColor: 'white',
   },
   header: {
     fontWeight: 'bold',
-    marginBottom: 0,
+    marginBottom: 20,
     fontSize: 36,
   },
   titleBar: {
@@ -622,3 +684,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default App;

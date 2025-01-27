@@ -18,6 +18,7 @@ import {
   Linking,
   Alert,
   Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import Share from 'react-native-share';
 import Dialog from 'react-native-dialog';
@@ -30,7 +31,7 @@ import {CommonActions, useNavigation} from '@react-navigation/native';
 import {getPathAfterLocalhost} from '../helpers/parsers';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useLanguage} from '../i18n';
+import {i18n, useLanguage} from '../i18n';
 
 import DocumentPicker from 'react-native-document-picker';
 import {I18n} from 'i18n-js';
@@ -42,6 +43,7 @@ import {
   copyFile,
   DocumentDirectoryPath,
   DownloadDirectoryPath,
+  exists,
   MainBundlePath,
   readFile,
   TemporaryDirectoryPath,
@@ -60,6 +62,9 @@ type WebViewMessage = {
   spec: string;
   error?: string;
 };
+
+const URL_PREFIX =
+  Platform.OS === 'ios' ? 'http://127.0.0.1:3000' : 'file:///android_asset';
 
 const VPL_STATE_KEY = 'vpl3State';
 const VPL_DEFAULT_STATE: VPLState = {
@@ -85,6 +90,37 @@ const VPL_DEFAULT_STATE: VPLState = {
   disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
   program: [],
 };
+
+async function requestStoragePermission() {
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: i18n.t('storage_permission_title'),
+          message: i18n.t('storage_permission_description'),
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return true;
+      } else {
+        Toast.showWithGravity(
+          i18n.t('storage_permission_description'),
+          Toast.LONG,
+          Toast.BOTTOM,
+        );
+        return false;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  } else {
+    return true;
+  }
+}
 
 const onBackPress = (webViewRef: MutableRefObject<any>, i18n: I18n) => {
   Alert.alert(
@@ -129,7 +165,7 @@ function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
 
   const {name, uuid, address, port} = props.route.params;
-  const appURI = `http://127.0.0.1:3000/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
+  const appURI = `${URL_PREFIX}/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
   const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
@@ -222,12 +258,14 @@ function App(props: any): JSX.Element {
 
       console.log('Programa cargado');
 
-      /*
-      webViewRef.current.postMessage(
-        JSON.stringify({action: 'setProgram', program: file}),
-      );
-      */
-      webViewRef.current.reload();
+      // TODO Investigate the different behaviour between the platforms
+      if (Platform.OS === 'ios') {
+        webViewRef.current.reload();
+      } else {
+        webViewRef.current.postMessage(
+          JSON.stringify({action: 'setProgram', program: file}),
+        );
+      }
     } catch (err: unknown) {
       if (DocumentPicker.isCancel(err)) {
         console.log('File selection cancelled');
@@ -242,7 +280,7 @@ function App(props: any): JSX.Element {
     }
   };
 
-  const saveJsonFile = async (
+  const saveFile = async (
     jsonData: string,
     filename: string,
     quit: boolean,
@@ -303,8 +341,11 @@ function App(props: any): JSX.Element {
   };
 
   const handleSave = async () => {
-    await saveJsonFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
-    setDialogVisible(null);
+    const hasPermission = await requestStoragePermission();
+    if (hasPermission) {
+      await saveFile(JSON.stringify(dialogVisible), fileName + '.vpl3', quit);
+      setDialogVisible(null);
+    }
   };
 
   const shareFile = async (filePath: any) => {
@@ -329,7 +370,7 @@ function App(props: any): JSX.Element {
       ),
       headerLeft: () => (
         <View>
-          <TouchableOpacity onPress={() => onBackPress(webViewRef, i18n)}>
+          <TouchableOpacity onPressOut={() => onBackPress(webViewRef, i18n)}>
             <BackIcon />
           </TouchableOpacity>
         </View>
@@ -337,7 +378,7 @@ function App(props: any): JSX.Element {
       headerRight: () => (
         <View style={styles.titleContainer}>
           <TouchableOpacity
-            onPress={() =>
+            onPressOut={() =>
               Linking.openURL(
                 'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-en-vpl3/',
               )
@@ -449,8 +490,11 @@ function App(props: any): JSX.Element {
           },
           {
             text: i18n.t('vpl3_program_load'),
-            onPress: () => {
-              loadFile();
+            onPress: async () => {
+              const hasPermission = await requestStoragePermission();
+              if (hasPermission) {
+                loadFile();
+              }
             },
           },
           {
@@ -565,7 +609,14 @@ function App(props: any): JSX.Element {
                 return true;
               }
 
-              if (request.url.includes('127.0.0.1')) {
+              if (Platform.OS === 'ios' && request.url.includes('127.0.0.1')) {
+                return true;
+              }
+
+              if (
+                Platform.OS === 'android' &&
+                request.url.includes('file:///android_asset')
+              ) {
                 return true;
               }
 

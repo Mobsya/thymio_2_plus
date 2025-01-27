@@ -279,7 +279,7 @@ function App(props: any): JSX.Element {
               value={fileName}
             />
             <Dialog.Button
-              label={i18n.t('scratch_saveForm_labelButton_calcel')}
+              label={i18n.t('scratch_saveForm_labelButton_cancel')}
               onPress={() => setDialogVisible(null)}
             />
             <Dialog.Button
