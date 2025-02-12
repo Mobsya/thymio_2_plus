@@ -87,7 +87,7 @@ const VPL_DEFAULT_STATE: VPLState = {
     'notes',
   ],
   basicMultiEvent: true,
-  disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash'],
+  disabledUI: ['src:language', 'vpl:exportToHTML', 'vpl:flash', 'vpl:teacher-save'],
   program: [],
 };
 
@@ -165,7 +165,7 @@ function App(props: any): JSX.Element {
   const {language, i18n} = useLanguage();
 
   const {name, uuid, address, port} = props.route.params;
-  const appURI = `${URL_PREFIX}/vpl3/index.html?robot=thymio-tdm&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
+  const appURI = `${URL_PREFIX}/vpl3/index.html?robot=thymio-tdm&role=teacher&uilanguage=${language}#uuid=${uuid}&w=ws://${address}:${port}&name=${name}`;
   const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);

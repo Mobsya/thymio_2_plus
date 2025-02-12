@@ -88,7 +88,7 @@ function App({navigation}: any): JSX.Element {
         ))}
       </View>
 
-      <Text style={styles.versionString}>v3.4.1</Text>
+      <Text style={styles.versionString}>v3.4.2</Text>
     </View>
   );
 }
