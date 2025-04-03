@@ -33,7 +33,7 @@ import {getPathAfterLocalhost} from '../helpers/parsers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {i18n, useLanguage} from '../i18n';
 
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker, { errorCodes, isErrorWithCode } from '@react-native-documents/picker';
 import {I18n} from 'i18n-js';
 import Toast from 'react-native-simple-toast';
 import Server from '@dr.pogodin/react-native-static-server';
@@ -267,8 +267,19 @@ function App(props: any): JSX.Element {
         );
       }
     } catch (err: unknown) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('File selection cancelled');
+      if (isErrorWithCode(err)) {
+        switch(err.code) {
+          case errorCodes.OPERATION_CANCELED:
+            console.log('File selection cancelled');
+            break;
+          default:
+            console.log('Error selecting file:', err);
+            Toast.showWithGravity(
+              (err as Error).message,
+              Toast.SHORT,
+              Toast.BOTTOM,
+            );
+        }
       } else {
         console.log('Error selecting file:', err);
         Toast.showWithGravity(
