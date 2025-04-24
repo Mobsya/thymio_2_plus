@@ -1,0 +1,323 @@
+{
+	"blocks": [
+		{
+			"name": "button 1",
+			"js": {
+				"sectionBegin": "this.addEventListener(\"buttons\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clause": "this.get(\"button.`['center', 'forward', 'backward', 'right', 'left'][$[0]]`\")"
+			}
+		},
+		{
+			"name": "init",
+			"js": {
+				"sectionBegin": "// initialization\n"
+			}
+		},
+		{
+			"name": "roll"
+		},
+		{
+			"name": "acc side"
+		},
+		{
+			"name": "acc upside down"
+		},
+		{
+			"name": "yaw"
+		},
+		{
+			"name": "pitch"
+		},
+		{
+			"name": "clap",
+			"js": {
+				"initCodeExec": [
+					[
+						"// setup threshold for detecting claps\n",
+						"this.set[\"mic.threshold\", 250];\n"
+					]
+				],
+				"sectionBegin": "this.addEventListener(\"mic\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clause": "this.get[\"mic.intensity\"] > this.get[\"mic.threshold\"]",
+				"clauseOptional": true
+			}
+		},
+		{
+			"name": "fall"
+		},
+		{
+			"name": "tap",
+			"js": {
+				"initVarDecl": [
+					"var tapped;\n"
+				],
+				"initCodeExec": [
+					"tapped = false;\n"
+				],
+				"sectionBegin": "this.addEventListener(\"tap\", function (name, param) {\n",
+				"sectionPreamble": "tapped = true;\n",
+				"sectionEnd": "});\n",
+				"clauseAsCondition": "tapped"
+			}
+		},
+		{
+			"name": "ground mean",
+			"js": {
+				"sectionBegin": "this.addEventListener(\"prox\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clauseInit": [
+					"var proxGroundDelta = this.get(\"prox.ground.delta\");\n"
+				],
+				"clause": "proxGroundDelta[0] + proxGroundDelta[1] `$[0] ? '>= 0.45' : '<= 0.4'`"
+			}
+		},
+		{
+			"name": "ground",
+			"js": {
+				"sectionBegin": "this.addEventListener(\"prox\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clauseInit": [
+					"var proxGroundDelta = this.get(\"prox.ground.delta\");\n"
+				],
+				"clauseAnd": "`$[i] ? 'proxGroundDelta[' + i + '] ' + ($[i] > 0 ? '>= 0.225' : '<= 0.2') : ''`"
+			}
+		},
+		{
+			"name": "ground 1"
+		},
+		{
+			"name": "horiz prox",
+			"js": {
+				"sectionBegin": "this.addEventListener(\"prox\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clause": "`[2, 1, 3, 0, 4, 5, 6].map(function (ix, i) { return $[i] ? 'this.get(\"prox.horizontal\")[' + ix + '] ' + ($[i] > 0 ? '>' : '<') + '= 0.5' : ''; }).filter(function (s) { return s; }).join(' || ')`"
+			}
+		},
+		{
+			"name": "horiz prox front adv"
+		},
+		{
+			"name": "horiz prox back adv"
+		},
+		{
+			"name": "remote control arrows"
+		},
+		{
+			"name": "remote control keypad"
+		},
+		{
+			"name": "timer"
+		},
+		{
+			"name": "counter comparison"
+		},
+		{
+			"name": "state 256"
+		},
+		{
+			"name": "state 256 with mask"
+		},
+		{
+			"name": "color 8 state"
+		},
+		{
+			"name": "bottom color 8 state"
+		},
+		{
+			"name": "motor",
+			"js": {
+				"initCodeExec": [
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement": [
+					"this.set(\"motor.left\", `($[0] * slowdown).toFixed(2)`);\n",
+					"this.set(\"motor.right\", `($[1] * slowdown).toFixed(2)`);\n"
+				]
+			}
+		},
+		{
+			"name": "move",
+			"js": {
+				"initCodeExec": [
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement": [
+					"this.set(\"motor.left\", `Math.round([0, 0.2, 0.25, 0.1, -1.5, -0.2, -0.25, -0.1, 0.15][$[0]] * slowdown).toFixed(2)`);\n",
+					"this.set(\"motor.right\", `Math.round([0, 0.2, 0.15, -0.1, -0.25, -0.2, -0.15, 0.1, 0.25][$[0]] * slowdown).toFixed(2)`);\n"
+				]
+			}
+		},
+		{
+			"name": "top color 8",
+			"js": {
+				"initCodeExec": [
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement":
+					"this.set(\"leds.top\", [`['0,0,0','1,0,0','0,1,0','1,1,0','0,0,1','1,0,1','0,1,1','1,1,1'][$[0]]`]);\n"
+			}
+		},
+		{
+			"name": "bottom color 8",
+			"js": {
+				"initCodeExec": [
+					[
+						"this.set(\"leds.bottom.left\", [0, 0, 0]);\n",
+						"this.set(\"leds.bottom.right\", [0, 0, 0]);\n"
+					]
+				],
+				"statement": [
+					"this.set(\"leds.bottom.left\", [`['0,0,0','1,0,0','0,1,0','1,1,0','0,0,1','1,0,1','0,1,1','1,1,1'][$[0]]`]);\n",
+					"this.set(\"leds.bottom.right\", [`['0,0,0','1,0,0','0,1,0','1,1,0','0,0,1','1,0,1','0,1,1','1,1,1'][$[0]]`]);\n"
+				]
+			}
+		},
+		{
+			"name": "top color",
+			"js": {
+				"initCodeExec": [
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement":
+					"this.set(\"leds.top\", [`$.map(function (x) { return x.toFixed(2); }).join(', ')`]);\n"
+			}
+		},
+		{
+			"name": "bottom color",
+			"js": {
+				"initCodeExec": [
+					[
+						"this.set(\"leds.bottom.left\", [0, 0, 0]);\n",
+						"this.set(\"leds.bottom.right\", [0, 0, 0]);\n"
+					]
+				],
+				"statement": [
+					"this.set(\"leds.bottom.left\", [`$.map(function (x) { return x.toFixed(2); }).join(', ')`]);\n",
+					"this.set(\"leds.bottom.right\", [`$.map(function (x) { return x.toFixed(2); }).join(', ')`]);\n"
+				]
+			}
+		},
+		{
+			"name": "set timer",
+			"js": {
+				"initCodeExec": [
+					[
+						"// stop timer 0\n",
+						"this.setTimer(0, 'timer0', -1);\n"
+					]
+				],
+				"statement": "this.setTimer(0, 'timer0', `($[0] / slowdown).toFixed(1)`);\n"
+			}
+		},
+		{
+			"name": "notes",
+			"js": {
+				"initCodeExec": [
+					"// init notes\nthis.set(\"sound\", {});\n",
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement":
+					"this.set(\"sound\", {\"f\": [`$.filter(function (a, i) { return i % 2 == 0; }).map(function (h) { return [262, 311, 370, 440, 524, 370][h]; }).join(', ')`], \"d\": [`$.filter(function (a, i) { return i % 2 == 1; }).map(function (d) { return 7 * d; }).join(', ')`]});\n"
+			}
+		},
+		{
+			"name": "notes with speed",
+			"js": {
+				"initCodeExec": [
+					"// init notes\nthis.set(\"sound\", {});\n",
+					"this.set(\"leds.top\", [0, 0, 0]);\n"
+				],
+				"statement":
+					"this.set(\"sound\", {\"f\": [`$.filter(function (a, i) { return i % 2 == 1; }).map(function (h) { return [262, 311, 370, 440, 524, 370][h]; }).join(', ')`], \"d\": [`$.slice(1).filter(function (a, i) { return i % 2 == 1; }).map(function (d) { return Math.round(Math.pow(2, $[0]) * 7) * d; }).join(', ')`]});\n"
+			}
+		},
+		{
+			"name": "play",
+			"js": {
+				"initCodeExec": [
+					"// init notes\nthis.set(\"sound\", {});\n"
+				],
+				"statement": "this.set(\"sound\", {\"pcm\": `$[0].toString(10)`});\n"
+			}
+		},
+		{
+			"name": "play stop",
+			"js": {
+				"initCodeExec": [
+					"// init notes\nthis.set(\"sound\", {});\n"
+				],
+				"statement": "this.set(\"sound\", {});\n"
+			}
+		},
+		{
+			"name": "set state 256",
+			"js": {
+				"initVarDecl": [
+					[
+						"// variable for counter\n",
+						"this.setClientState(\"counter\", 0);\n"
+					]
+				],
+				"initCodeExec": [
+					"this.setClientState(\"counter\", 0);\n"
+				],
+				"statement": [
+					"var counter = `$.reduce(function (a, b, i) { return b ? a | (1 << i) : a; }, 0)`;\n",
+					"this.setClientState(\"counter\", counter);\n",
+					"this.set(\"leds.circle\", [counter&1?1:0,counter&2?1:0,counter&4?1:0,counter&8?1:0,counter&16?1:0,counter&32?1:0,counter&64?1:0,counter&128?1:0]);\n"
+				]
+			}
+		},
+		{
+			"name": "set state 256 with mask",
+			"js": {
+				"initVarDecl": [
+					[
+						"// variable for counter\n",
+						"this.setClientState(\"counter\", 0);\n"
+					]
+				],
+				"initCodeExec": [
+					"this.setClientState(\"counter\", 0);\n"
+				],
+				"statement": [
+					"var counter = counter & `$.reduce(function (a, b, i) { return b === 0 ? a | (1 << i) : a; }, 0)` | `$.reduce(function (a, b, i) { return b === 1 ? a | (1 << i) : a; }, 0)`;\n",
+					"this.setClientState(\"counter\", counter);\n",
+					"this.set(\"leds.circle\", [counter&1?1:0,counter&2?1:0,counter&4?1:0,counter&8?1:0,counter&16?1:0,counter&32?1:0,counter&64?1:0,counter&128?1:0]);\n"
+				]
+			}
+		},
+		{
+			"name": "arithmetic",
+			"js": {
+				"initVarDecl": [
+					[
+						"// variable for counter\n",
+						"this.setClientState(\"counter\", 0);\n"
+					]
+				],
+				"initCodeExec": [
+					"this.setClientState(\"counter\", 0);\n"
+				],
+				"statement":
+					"`$[2] && $[0] != 0 && $[0] != 4 && $[1] != 0 ? 'if (state ' + ($[0] == 2 ? '< ' + $[1] + ') {\\nstate = 0\\n' : '> ' + [null,255-$[1],null,Math.floor(255/$[1])][$[0]] + ') {\\nstate = 255\\n') + '} else {\\nstate ' + ['','+','-','*','/'][$[0]] + '= ' + $[1] + '\\n}\\n' : 'state ' + ['','+','-','*','/'][$[0]] + '= ' + $[1] + ';\\n'`display_state();\n"
+			}
+		},
+		{
+			"name": "button",
+			"js": {
+				"sectionBegin": "this.addEventListener(\"buttons\", function (name, param) {\n",
+				"sectionEnd": "});\n",
+				"clause": "`['center', 'forward', 'backward', 'right', 'left'].map(function (s, i) { return $[i] ? 'this.get(\"button.' + s + '\")' : ''; }).filter(function (s) { return s; }).join(' && ') || ['center', 'forward', 'backward', 'right', 'left'].map(function (s) { return 'this.get(\"button.' + s + '\")'; }).join(' || ')`"
+			}
+		},
+		{
+			"name": "horiz prox adv"
+		},
+		{
+			"name": "ground adv"
+		}
+	]
+}

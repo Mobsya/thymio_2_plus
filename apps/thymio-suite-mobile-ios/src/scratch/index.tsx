@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {JSX, useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -27,12 +27,16 @@ import Server from '@dr.pogodin/react-native-static-server';
 import { DocumentDirectoryPath, DownloadDirectoryPath, exists, MainBundlePath, writeFile } from '@dr.pogodin/react-native-fs';
 import Toast from 'react-native-simple-toast';
 
+const URL_PREFIX =
+  Platform.OS === 'ios' ? 'http://127.0.0.1:3000' : 'file:///android_asset';
+
 function App(props: any): JSX.Element {
   const navigation = useNavigation();
-  const {language, i18n} = useLanguage();
+  const {i18n} = useLanguage();
 
   const { uuid, name, address, port } = props.route.params;
-  const appURI = `http://127.0.0.1:3000/scratch/index.html?device=${uuid}&ws=ws://${address}:${port}`;
+
+  const appURI = `${URL_PREFIX}/scratch/index.html?device=${uuid}&ws=ws://${address}:${port}`;
   const encodedURI = encodeURI(appURI);
 
   const webViewRef = useRef<any>(null);
@@ -41,31 +45,86 @@ function App(props: any): JSX.Element {
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('scratch-program');
 
-  useEffect(() => {
-    const path = `${MainBundlePath}/www`;
-
-    const server = new Server({
-      fileDir: path,
-      port: 3000,
-      stopInBackground: false
-    });
-
-    server.start().then((url:string) => {
-      console.log('Server running at:', url);
-    });
-
-    // Stop the server when the component unmounts
-    return () => {
-      server.stop().then(() => console.log('Server stopped'));
-    };
-  }, []);
-
   const backgroundStyle = {
     backgroundColor: '#201439',
   };
 
-  const showDialog = (base64Data: string) => {
-    setDialogVisible(base64Data);
+  if(Platform.OS === 'ios') {
+    useEffect(() => {
+      const path = `${MainBundlePath}/www`;
+
+      const server = new Server({
+        fileDir: path,
+        port: 3000,
+        stopInBackground: false
+      });
+
+      server.start().then((url:string) => {
+        console.log('Server running at:', url);
+      });
+
+      // Stop the server when the component unmounts
+      return () => {
+        server.stop().then(() => console.log('Server stopped'));
+      };
+    }, []);
+  }
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={styles.titleContainer}>
+          <LauncherIcon />
+          <Text style={styles.titleBar}>
+            {name}
+          </Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <View>
+          <TouchableOpacity onPressOut={() => onBackPress()}>
+            <BackIcon />
+          </TouchableOpacity>
+        </View>
+      ),
+      headerRight: () => (
+        <View style={styles.titleContainer}>
+          <TouchableOpacity
+            onPressOut={() =>
+              Linking.openURL(
+                'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-avec-scratch/',
+              )
+            }>
+            <HelpIcon />
+          </TouchableOpacity>
+          <View style={{width: 10}} />
+        </View>
+      ),
+      headerTitleAlign: 'center',
+      headerBackVisible: false,
+    });
+  }, [webViewRef]);
+
+  const onBackPress = () => {
+    // Mostrar una alerta al usuario antes de ir hacia atrás
+    Alert.alert(
+      i18n.t('vpl3_confirm_quit1'), // Título de la alerta
+      i18n.t('vpl3_confirm_quit2'), // Mensaje de la alerta
+      [
+        {
+          text: i18n.t('scratch_cancel'),
+          onPress: () => console.log('Annulation'), // No hace nada, solo cierra la alerta
+          style: 'cancel',
+        },
+        {
+          text: i18n.t('scratch_quit'),
+          onPress: () => {
+            navigation.dispatch(CommonActions.goBack())
+          }
+        },
+      ],
+      {cancelable: true}, // Permite cerrar la alerta tocando fuera de ella
+    );
   };
 
   const handleSave = () => {
@@ -76,7 +135,7 @@ function App(props: any): JSX.Element {
   };
 
   const shareFile = async (filePath: any) => {
-    console.log(`Intentando compartir archivo: ${filePath}`); // Asegúrate de que esto se imprima
+    console.log(`Intentando compartir archivo: ${filePath}`);
     try {
       const shareResponse = await Share.open({
         url: `file://${filePath}`,
@@ -84,6 +143,7 @@ function App(props: any): JSX.Element {
       console.log('Archivo compartido con éxito:', shareResponse);
     } catch (error) {
       console.log('Error al compartir el archivo:', error);
+      Toast.showWithGravity((error as Error).message, Toast.SHORT, Toast.BOTTOM);
     }
   };
 
@@ -178,71 +238,25 @@ function App(props: any): JSX.Element {
     }
   };
 
-  const onBackPress = () => {
-    // Mostrar una alerta al usuario antes de ir hacia atrás
-    Alert.alert(
-      i18n.t('vpl3_confirm_quit1'), // Título de la alerta
-      i18n.t('vpl3_confirm_quit2'), // Mensaje de la alerta
-      [
-        {
-          text: i18n.t('scratch_cancel'),
-          onPress: () => console.log('Annulation'), // No hace nada, solo cierra la alerta
-          style: 'cancel',
-        },
-        {
-          text: i18n.t('scratch_quit'),
-          onPress: () => {
-            navigation.dispatch(CommonActions.goBack())
-          }
-        },
-      ],
-      {cancelable: true}, // Permite cerrar la alerta tocando fuera de ella
-    );
-  };
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => (
-        <View style={styles.titleContainer}>
-          <LauncherIcon />
-          <Text style={styles.titleBar}>
-            {name}
-          </Text>
-        </View>
-      ),
-      headerLeft: () => (
-        <View>
-          <TouchableOpacity onPress={() => onBackPress()}>
-            <BackIcon />
-          </TouchableOpacity>
-        </View>
-      ),
-      headerRight: () => (
-        <View style={styles.titleContainer}>
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL(
-                'https://www.thymio.org/fr/produits/programmer-avec-thymio-suite/programmer-avec-scratch/',
-              )
-            }>
-            <HelpIcon />
-          </TouchableOpacity>
-          <View style={{width: 10}} />
-        </View>
-      ),
-      headerTitleAlign: 'center',
-      headerBackVisible: false,
-    });
-  }, [webViewRef]);
-
   const handleOnMessage = async (event: {nativeEvent: {data: any}}) => {
     const _data = event.nativeEvent.data;
+
+    if (
+      !_data ||
+      _data === 'null' ||
+      _data === 'undefined' ||
+      _data[0] === '<'
+    ) {
+      return;
+    }
+
     const {type, payload} = JSON.parse(_data);
 
     const base64Data = payload;
 
     console.log('HandleOnMessage:', type);
-    showDialog(base64Data);
+
+    setDialogVisible(base64Data);
   };
 
   const openURL = (_url: string) => {
@@ -311,7 +325,8 @@ function App(props: any): JSX.Element {
               console.warn('WebView error: ', nativeEvent);
             }}
             onShouldStartLoadWithRequest={(request: WebViewNavigation) => {
-              // console.log('request.url::--->', request.url);
+              console.log('request.url::--->', request.url);
+
               if (request.url.includes('localhost')) {
                 return true;
               }
@@ -321,6 +336,10 @@ function App(props: any): JSX.Element {
               }
 
               if (request.url.includes('127.0.0.1')) {
+                return true;
+              }
+
+              if (request.url.includes('file:///android_asset')) {
                 return true;
               }
 

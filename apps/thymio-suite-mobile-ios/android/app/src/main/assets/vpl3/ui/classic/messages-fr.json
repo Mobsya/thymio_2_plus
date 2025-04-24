@@ -1,0 +1,22 @@
+{
+	"i18n": {
+		"fr": {
+			"Same block used multiple times": "Même bloc utilisé plusieurs fois",
+			"Rules with same events": "Règles avec les mêmes événements",
+			"Missing action block": "Il manque un bloc d'action",
+			"Missing event block": "Il manque un bloc d'événement",
+			"No button specified": "Aucun bouton n'est spécifié",
+			"No ground sensor specified": "Aucun capteur de sol n'est spécifié",
+			"No proximity sensor specified": "Aucun capteur de proximité n'est spécifié",
+			"No sensor specified": "Aucun capteur n'est spécifié",
+			"Open program file": "Ouvrir un programme",
+			"OK": "OK",
+			"Cancel": "Annuler",
+			"Open ground image file": "Ouvrir une image pour le sol",
+			"Open height image file": "Ouvrir une image pour la hauteur",
+			"Open obstacle SVG file": "Ouvrir un fichier SVG pour les obstacles",
+
+			"Script too big for target bytecode size": "Programme trop grand pour le Thymio"
+		}
+	}
+}

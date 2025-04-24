@@ -1,4 +1,5 @@
 import React, {
+  JSX,
   MutableRefObject,
   useCallback,
   useEffect,
@@ -43,7 +44,6 @@ import {
   copyFile,
   DocumentDirectoryPath,
   DownloadDirectoryPath,
-  exists,
   MainBundlePath,
   readFile,
   TemporaryDirectoryPath,

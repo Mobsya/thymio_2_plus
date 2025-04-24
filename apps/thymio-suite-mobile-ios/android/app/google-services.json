@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1076253646123",
+    "project_id": "mobsya-thymio",
+    "storage_bucket": "mobsya-thymio.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1076253646123:android:91d4d8e3a0ef626bb5396e",
+        "android_client_info": {
+          "package_name": "org.mobsya.ThymioSuite"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1076253646123-r85506r01v94c9lka1ksl336ir56eim6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.mobsya.ThymioSuite",
+            "certificate_hash": "9f2d91dd24044d0d3a3ecd0a147e91dda364c435"
+          }
+        },
+        {
+          "client_id": "1076253646123-kdr9m2bgtttpjbqf049sav4cm37eio3r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDssf0g9cASMUfUjsyltIkHTCMDd8jcu8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1076253646123-kdr9m2bgtttpjbqf049sav4cm37eio3r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

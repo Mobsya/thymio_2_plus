@@ -3,10 +3,11 @@
   "version": "3.4.2",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "lint": "eslint .",
     "start": "react-native start",
+    "android:run": "react-native run-android",
+    "android:build": "cd android && ./gradlew assembleRelease && ./gradlew bundleRelease",
+    "ios:run": "react-native run-ios",
+    "lint": "eslint .",
     "test": "jest"
   },
   "dependencies": {
@@ -77,6 +78,6 @@
     "typescript": "5.8.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }
