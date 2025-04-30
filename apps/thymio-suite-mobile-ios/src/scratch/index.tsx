@@ -1,6 +1,5 @@
 import React, {JSX, useEffect, useRef, useState} from 'react';
 import {
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -26,6 +25,7 @@ import Share from 'react-native-share';
 import Server from '@dr.pogodin/react-native-static-server';
 import { DocumentDirectoryPath, DownloadDirectoryPath, exists, MainBundlePath, writeFile } from '@dr.pogodin/react-native-fs';
 import Toast from 'react-native-simple-toast';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const URL_PREFIX =
   Platform.OS === 'ios' ? 'http://127.0.0.1:3000' : 'file:///android_asset';
@@ -44,10 +44,6 @@ function App(props: any): JSX.Element {
 
   const [dialogVisible, setDialogVisible] = useState<string | null>(null);
   const [fileName, setFileName] = useState('scratch-program');
-
-  const backgroundStyle = {
-    backgroundColor: '#201439',
-  };
 
   if(Platform.OS === 'ios') {
     useEffect(() => {
@@ -97,7 +93,6 @@ function App(props: any): JSX.Element {
             }>
             <HelpIcon />
           </TouchableOpacity>
-          <View style={{width: 10}} />
         </View>
       ),
       headerTitleAlign: 'center',
@@ -128,10 +123,10 @@ function App(props: any): JSX.Element {
   };
 
   const handleSave = () => {
-    setDialogVisible(null);
     if (dialogVisible) {
       saveFile(dialogVisible, fileName + '.sb3');
     }
+    setDialogVisible(null);
   };
 
   const shareFile = async (filePath: any) => {
@@ -275,9 +270,9 @@ function App(props: any): JSX.Element {
     <SafeAreaView style={styles.root}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor={styles.root.backgroundColor}
       />
-      <View style={{marginTop: 22}}>
+      <View style={styles.rootContainer}>
         <Dialog.Container
           visible={dialogVisible !== null}
           supportedOrientations={['landscape']}>
@@ -305,49 +300,44 @@ function App(props: any): JSX.Element {
             onPress={handleSave}
           />
         </Dialog.Container>
-      </View>
-      <View style={styles.rootHiddenContainer}>
-        <View style={styles.hiddenContainer}>
-          <View style={{height: 25}} />
-          <WebView
-            source={{
-              uri: encodedURI
-            }}
-            onMessage={handleOnMessage}
-            ref={webViewRef}
-            startInLoadingState
-            originWhitelist={['*']}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            style={{flex: 1}}
-            onError={syntheticEvent => {
-              const {nativeEvent} = syntheticEvent;
-              console.warn('WebView error: ', nativeEvent);
-            }}
-            onShouldStartLoadWithRequest={(request: WebViewNavigation) => {
-              console.log('request.url::--->', request.url);
+        <WebView
+          source={{
+            uri: encodedURI
+          }}
+          onMessage={handleOnMessage}
+          ref={webViewRef}
+          startInLoadingState
+          originWhitelist={['*']}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          style={{flex: 1}}
+          onError={syntheticEvent => {
+            const {nativeEvent} = syntheticEvent;
+            console.warn('WebView error: ', nativeEvent);
+          }}
+          onShouldStartLoadWithRequest={(request: WebViewNavigation) => {
+            console.log('request.url::--->', request.url);
 
-              if (request.url.includes('localhost')) {
-                return true;
-              }
-
-              if (request.url.includes('blob:')) {
-                return true;
-              }
-
-              if (request.url.includes('127.0.0.1')) {
-                return true;
-              }
-
-              if (request.url.includes('file:///android_asset')) {
-                return true;
-              }
-
-              openURL(request.url);
+            if (request.url.includes('localhost')) {
               return true;
-            }}
-          />
-        </View>
+            }
+
+            if (request.url.includes('blob:')) {
+              return true;
+            }
+
+            if (request.url.includes('127.0.0.1')) {
+              return true;
+            }
+
+            if (request.url.includes('file:///android_asset')) {
+              return true;
+            }
+
+            openURL(request.url);
+            return true;
+          }}
+        />
       </View>
     </SafeAreaView>
   );
@@ -362,6 +352,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: Dimensions.get('screen').height,
     width: Dimensions.get('screen').width,
+    backgroundColor: '#201439',
   },
   rootContainer: {
     flex: 1,
@@ -371,37 +362,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  rootHiddenContainer: {
-    flex: 1,
     height: Dimensions.get('screen').height,
     width: Dimensions.get('screen').width,
-    position: 'absolute',
-    // transform: [{ translateX: -Dimensions.get('window').width }],
-    // display: 'none',
-    zIndex: 1,
-    backgroundColor: 'white',
-  },
-  hiddenContainer: {
-    flex: 1,
-    height: Dimensions.get('screen').height - 25,
-    width: Dimensions.get('screen').width,
-    position: 'absolute',
-    // transform: [{ translateX: -Dimensions.get('window').width }],
-    // display: 'none',
-    zIndex: 2,
-    backgroundColor: 'white',
   },
   header: {
     fontWeight: 'bold',
-    marginBottom: 20,
     fontSize: 36,
   },
   titleBar: {
     color: 'white',
-    // fontFamily: 'roboto',
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 10,

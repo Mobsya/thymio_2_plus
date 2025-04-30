@@ -8,7 +8,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -34,7 +33,7 @@ import {getPathAfterLocalhost} from '../helpers/parsers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {i18n, useLanguage} from '../i18n';
 
-import DocumentPicker, { errorCodes, isErrorWithCode } from '@react-native-documents/picker';
+import { errorCodes, isErrorWithCode, pick, types } from '@react-native-documents/picker';
 import {I18n} from 'i18n-js';
 import Toast from 'react-native-simple-toast';
 import Server from '@dr.pogodin/react-native-static-server';
@@ -49,6 +48,7 @@ import {
   TemporaryDirectoryPath,
   writeFile,
 } from '@dr.pogodin/react-native-fs';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type VPLState = {
   basicBlocks: string[];
@@ -225,8 +225,8 @@ function App(props: any): JSX.Element {
 
   const loadFile = async () => {
     try {
-      const results = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      const results = await pick({
+        type: [types.allFiles],
       });
 
       const res = results[0];

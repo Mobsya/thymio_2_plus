@@ -85,7 +85,7 @@ function App({navigation}: any): JSX.Element {
         ))}
       </View>
       <View style={styles.containerFooter}>
-        <Text>v3.4.2</Text>
+        <Text>v3.5.0</Text>
       </View>
     </View>
   );

@@ -3,16 +3,12 @@ import {I18n} from 'i18n-js';
 import * as RNLocalize from 'react-native-localize';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  Modal,
-  Button,
   View,
   StyleSheet,
   Text,
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import {AppState, Platform} from 'react-native';
-import RNRestart from 'react-native-restart';
 
 import {en} from './translations/en';
 import {fr} from './translations/fr';
