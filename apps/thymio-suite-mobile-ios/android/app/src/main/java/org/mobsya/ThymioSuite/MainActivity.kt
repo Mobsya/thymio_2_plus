@@ -17,7 +17,9 @@ class MainActivity : ReactActivity() {
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        //react-native-screens override
+        super.onCreate(null);
+
         // Ocultar la barra de título, si está presente
         supportActionBar?.hide()
 
@@ -45,7 +47,7 @@ class MainActivity : ReactActivity() {
                     or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    )
+                )
         }
     }
 }
